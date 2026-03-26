@@ -124,7 +124,7 @@ function playSound(key, opts = {}) {
 // ─── ELEMENTAL MATRIX (Master Specs) ───
 // 6 core elements with strengths/weaknesses per spec + void endgame
 const ELEMENTS = {
-  fire:      { name: "Magma",   emoji: "\u{1F525}", color: "#ff4422", accent: "#ff8844", bg: "#331108", weakness: "ice",       strong: ["ice", "stone"],         arena: "/arenas/fire.png",
+  fire:      { name: "Magma",   emoji: "\u{1F525}", color: "#ff4422", accent: "#ff8844", bg: "#331108", weakness: "ice",       strong: ["nature", "stone"],         arena: "/arenas/fire.png",
     lore: "Scorchers of the Depths. Born from cracked lava, they serve as the Forge's thermal reactors. Their sustained magma breath regulates the simulation's core temperature.",
     role: "Thermal Reactor" },
   ice:       { name: "Ice",     emoji: "\u2744\uFE0F",  color: "#44bbff", accent: "#88ddff", bg: "#081828", weakness: "fire",      strong: ["venom", "lightning"],    arena: "/arenas/ice.png",
@@ -133,7 +133,7 @@ const ELEMENTS = {
   lightning: { name: "Static",  emoji: "\u26A1",    color: "#ffdd00", accent: "#ffee66", bg: "#282008", weakness: "stone",     strong: ["fire", "venom"],         arena: "/arenas/storm.png",
     lore: "Masters of Energy. The electrical conduits of the Forge, channeling power between Solar sources and Magma reactors. Fast, unpredictable, and devastating.",
     role: "Energy Conduit" },
-  nature:    { name: "Venom",   emoji: "\u{1F40D}", color: "#76ff03", accent: "#88ff99", bg: "#082810", weakness: "lightning", strong: ["shadow", "lightning"],   arena: "/arenas/venom.png",
+  nature:    { name: "Venom",   emoji: "\u{1F40D}", color: "#76ff03", accent: "#88ff99", bg: "#082810", weakness: "lightning", strong: ["shadow", "stone"],   arena: "/arenas/venom.png",
     lore: "The Corrosive Ones. They emerged from the swamps of corrupted data, dissolving unstable code with their acid. Patient predators who outlast their prey.",
     role: "Code Purifier" },
   shadow:    { name: "Shadow",  emoji: "\u{1F311}", color: "#9944ff", accent: "#bb88ff", bg: "#180828", weakness: "nature",    strong: ["lightning", "stone"],     arena: "/arenas/shadow.png",
@@ -165,37 +165,37 @@ const ABILITIES = {
   fire: [
     { name: "Magma Bolt", dmg: 18, cost: 15, type: "attack", icon: "\u{1F525}", fx: "fire", desc: "Hurl a blazing fireball" },
     { name: "Inferno", dmg: 30, cost: 28, type: "attack", icon: "\u{1F30B}", fx: "fire", desc: "Unleash a firestorm" },
-    { name: "Flame Shield", dmg: 0, cost: 12, type: "buff", value: 3, icon: "\u{1F6E1}\uFE0F", fx: "buff", desc: "+3 DEF this fight" },
+    { name: "Flame Shield", dmg: 0, cost: 12, type: "buff", value: 3, stat: "defense", icon: "\u{1F6E1}\uFE0F", fx: "buff", desc: "+3 DEF this fight" },
     { name: "Searing Drain", dmg: 14, cost: 18, type: "drain", healPct: 0.4, icon: "\u{1F480}", fx: "fire", desc: "Drain life from foe" },
   ],
   ice: [
     { name: "Frost Bolt", dmg: 16, cost: 13, type: "attack", icon: "\u2744\uFE0F", fx: "ice", desc: "Launch a bolt of ice" },
     { name: "Blizzard", dmg: 28, cost: 26, type: "attack", icon: "\u{1F328}\uFE0F", fx: "ice", desc: "Summon a blizzard" },
-    { name: "Ice Armor", dmg: 0, cost: 14, type: "buff", value: 4, icon: "\u{1F9CA}", fx: "buff", desc: "+4 DEF this fight" },
+    { name: "Ice Armor", dmg: 0, cost: 14, type: "buff", value: 4, stat: "defense", icon: "\u{1F9CA}", fx: "buff", desc: "+4 DEF this fight" },
     { name: "Glacial Heal", dmg: 0, cost: 20, type: "heal", value: 25, icon: "\u{1F48E}", fx: "heal", desc: "Restore 25 HP" },
   ],
   lightning: [
     { name: "Static Spark", dmg: 14, cost: 10, type: "attack", icon: "\u26A1", fx: "lightning", desc: "Quick lightning strike" },
     { name: "Thunder Crash", dmg: 32, cost: 30, type: "attack", icon: "\u{1F329}\uFE0F", fx: "lightning", desc: "Devastating thunder" },
-    { name: "Static Charge", dmg: 0, cost: 12, type: "buff", value: 3, icon: "\u{1F4AB}", fx: "buff", desc: "+3 ATK this fight" },
+    { name: "Static Charge", dmg: 0, cost: 12, type: "buff", value: 3, stat: "attack", icon: "\u{1F4AB}", fx: "buff", desc: "+3 ATK this fight" },
     { name: "Chain Lightning", dmg: 20, cost: 22, type: "attack", icon: "\u{1F517}", fx: "lightning", desc: "Chaining shock" },
   ],
   nature: [
     { name: "Venom Spit", dmg: 15, cost: 12, type: "attack", icon: "\u{1F40D}", fx: "nature", desc: "Spit corrosive venom" },
     { name: "Toxic Quake", dmg: 26, cost: 25, type: "attack", icon: "\u{1F30D}", fx: "nature", desc: "Shake the ground" },
     { name: "Regenerate", dmg: 0, cost: 18, type: "heal", value: 30, icon: "\u{1F331}", fx: "heal", desc: "Restore 30 HP" },
-    { name: "Thorn Armor", dmg: 0, cost: 14, type: "buff", value: 4, icon: "\u{1F335}", fx: "buff", desc: "+4 DEF this fight" },
+    { name: "Thorn Armor", dmg: 0, cost: 14, type: "buff", value: 4, stat: "defense", icon: "\u{1F335}", fx: "buff", desc: "+4 DEF this fight" },
   ],
   shadow: [
     { name: "Shadow Bolt", dmg: 17, cost: 14, type: "attack", icon: "\u{1F311}", fx: "shadow", desc: "Dark energy blast" },
     { name: "Void Rend", dmg: 34, cost: 32, type: "attack", icon: "\u{1F573}\uFE0F", fx: "shadow", desc: "Tear through reality" },
-    { name: "Dark Pact", dmg: 0, cost: 10, type: "buff", value: 4, icon: "\u{1F4FF}", fx: "buff", desc: "+4 ATK this fight" },
+    { name: "Dark Pact", dmg: 0, cost: 10, type: "buff", value: 4, stat: "attack", icon: "\u{1F4FF}", fx: "buff", desc: "+4 ATK this fight" },
     { name: "Soul Siphon", dmg: 16, cost: 20, type: "drain", healPct: 0.5, icon: "\u{1F441}\uFE0F", fx: "shadow", desc: "Steal life force" },
   ],
   stone: [
     { name: "Rock Hurl", dmg: 16, cost: 13, type: "attack", icon: "\u{1FAA8}", fx: "stone", desc: "Launch a boulder" },
     { name: "Avalanche", dmg: 29, cost: 27, type: "attack", icon: "\u{1F3D4}\uFE0F", fx: "stone", desc: "Crush with rocks" },
-    { name: "Stone Skin", dmg: 0, cost: 12, type: "buff", value: 5, icon: "\u{1F6E1}\uFE0F", fx: "buff", desc: "+5 DEF this fight" },
+    { name: "Stone Skin", dmg: 0, cost: 12, type: "buff", value: 5, stat: "defense", icon: "\u{1F6E1}\uFE0F", fx: "buff", desc: "+5 DEF this fight" },
     { name: "Earth Mend", dmg: 0, cost: 18, type: "heal", value: 28, icon: "\u{1F33F}", fx: "heal", desc: "Restore 28 HP" },
   ],
 };
@@ -222,8 +222,8 @@ const TECHNIQUES = [
   { name: "Battle Roar",   dmg: 0,  cost: 18, type: "roar", atkVal: 3, defVal: 2, icon: "\u{1F981}", fx: "buff", desc: "+3 ATK +2 DEF", req: 5, price: 120 },
   { name: "Life Steal",    dmg: 20, cost: 22, type: "drain", healPct: 0.5, icon: "\u{1F9DB}", fx: "shadow", desc: "Steal 50% as HP", req: 7, price: 160 },
   { name: "Dragon Breath", dmg: 35, cost: 35, type: "attack", icon: "\u{1F409}", fx: "fire",    desc: "Devastating breath", req: 9,  price: 200 },
-  { name: "Iron Scales",   dmg: 0,  cost: 15, type: "buff", value: 6, icon: "\u{1FAA8}", fx: "buff", desc: "+6 DEF this fight", req: 8, price: 140 },
-  { name: "War Cry",       dmg: 0,  cost: 12, type: "buff", value: 5, icon: "\u{1F4EF}", fx: "buff", desc: "+5 ATK this fight", req: 6, price: 130 },
+  { name: "Iron Scales",   dmg: 0,  cost: 15, type: "buff", value: 6, stat: "defense", icon: "\u{1FAA8}", fx: "buff", desc: "+6 DEF this fight", req: 8, price: 140 },
+  { name: "War Cry",       dmg: 0,  cost: 12, type: "buff", value: 5, stat: "attack", icon: "\u{1F4EF}", fx: "buff", desc: "+5 ATK this fight", req: 6, price: 130 },
   { name: "Meteor Strike",  dmg: 45, cost: 45, type: "attack", icon: "\u2604\uFE0F", fx: "fire", desc: "Call down a meteor", req: 14, price: 350 },
   { name: "Healing Surge",  dmg: 0,  cost: 25, type: "heal", value: 40, icon: "\u2728", fx: "heal", desc: "Restore 40 HP",   req: 10, price: 220 },
 ];
@@ -1107,6 +1107,47 @@ function generateBoss(bossIndex) {
   };
 }
 
+// ─── CSS (module-level constant — injected once, not recreated per render) ───
+const MODULE_CSS = `
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Fira Code', monospace; }
+    @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-40px); opacity: 0; } }
+    @keyframes particleBurst { 0% { transform: scale(0); opacity: 0.8; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(0) translateY(-20px); opacity: 0; } }
+    @keyframes fireRise { 0% { opacity: 0.9; transform: translateY(0) scale(0.5); } 40% { opacity: 1; transform: translateY(-15px) scale(1.2); } 100% { opacity: 0; transform: translateY(-45px) scale(0.3); } }
+    @keyframes iceShatter { 0% { opacity: 0; transform: scale(0); } 20% { opacity: 1; transform: scale(1.3); } 100% { opacity: 0; transform: scale(0.5) translate(var(--sx,10px), var(--sy,10px)); } }
+    @keyframes lightningFlash { 0% { opacity: 0; } 10% { opacity: 1; } 30% { opacity: 0; } 50% { opacity: 1; } 70% { opacity: 0.3; } 100% { opacity: 0; } }
+    @keyframes sparkFly { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0) translateY(-20px) translateX(var(--sx,15px)); } }
+    @keyframes venomDrip { 0% { opacity: 0; transform: translateY(-10px) scale(0.5); } 30% { opacity: 0.9; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(25px) scale(0.6); } }
+    @keyframes shadowWisp { 0% { opacity: 0; transform: scale(0.3) rotate(0deg); } 40% { opacity: 0.7; transform: scale(1) rotate(10deg); } 100% { opacity: 0; transform: scale(1.5) rotate(-10deg) translateY(-15px); } }
+    @keyframes rockBlast { 0% { opacity: 0; transform: scale(0) rotate(0deg); } 20% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0; transform: translateY(30px) translateX(var(--sx,20px)) rotate(180deg); } }
+    @keyframes healRise { 0% { opacity: 0; transform: translateY(10px) scale(0.5); } 50% { opacity: 1; transform: translateY(-5px) scale(1); } 100% { opacity: 0; transform: translateY(-25px) scale(0.3); } }
+    @keyframes slideIn { 0% { transform: translateY(20px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    @keyframes evoFlash { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0; transform: scale(2); } }
+    @keyframes s-glow { 0% { filter: drop-shadow(0 0 5px #0f0); } 50% { filter: drop-shadow(0 0 10px #fff); } 100% { filter: drop-shadow(0 0 5px #0f0); } }
+    @keyframes weather-rain { 0% { transform: translateY(-30px) skewX(-15deg); } 100% { transform: translateY(30px) skewX(-15deg); } }
+    @keyframes weather-sand { 0% { transform: translateX(-20px) skewY(2deg); } 100% { transform: translateX(20px) skewY(2deg); } }
+    @keyframes weather-heat { 0%,100% { transform: scaleY(1); opacity: 0.3; } 50% { transform: scaleY(1.02); opacity: 0.6; } }
+    @keyframes u-glow { 0% { filter: drop-shadow(0 0 10px #f0f) hue-rotate(0deg); } 50% { filter: drop-shadow(0 0 20px #0ff) hue-rotate(180deg); } 100% { filter: drop-shadow(0 0 10px #f0f) hue-rotate(360deg); } }
+    .shiny-glow { animation: s-glow 2s linear infinite; }
+    .ultra-glow { animation: u-glow 1s linear infinite; }
+    .btn { background: #1a1a1a; border: 1px solid #333; color: #ccc; cursor: pointer; font-family: 'Fira Code', monospace; transition: all 0.2s; padding: 8px 12px; font-size: 10px; }
+    .btn:hover:not(:disabled) { background: #252525; border-color: #555; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: linear-gradient(135deg,#cc3300,#ff5522); border-color: #ff6633; color: #fff; font-weight: 700; }
+    .btn-primary:hover:not(:disabled) { background: linear-gradient(135deg,#dd4411,#ff6633); }
+    .btn-boss { background: linear-gradient(135deg,#551100,#882200); border-color: #aa3311; color: #ff8844; }
+    .nav-btn { background: none; border: none; color: #888; cursor: pointer; padding: 8px 14px; font-size: 11px; font-family: 'Fira Code', monospace; border-bottom: 2px solid transparent; }
+    .nav-btn.active { color: #44ff88; border-bottom-color: #44ff88; }
+    .nav-btn:hover { color: #aaa; }
+    .tab { background: none; border: none; border-bottom: 2px solid transparent; color: #666; cursor: pointer; padding: 6px 12px; font-size: 10px; font-family: 'Fira Code', monospace; text-transform: uppercase; letter-spacing: 1px; }
+    .tab.active { color: #44ff88; border-bottom-color: #44ff88; }
+    .tab:hover { color: #aaa; }
+    input, select { background: #111; border: 1px solid #333; color: #eee; padding: 6px 10px; font-family: 'Fira Code', monospace; font-size: 12px; outline: none; }
+    input:focus, select:focus { border-color: #44ff88; }
+  `;
+
 // ═══════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════
@@ -1353,17 +1394,21 @@ export default function DragonSimulator() {
   const createDragon = () => {
     if (!createName.trim()) return;
     const body = BODY_TYPES.find(b => b.id === createBody);
+    const initAtk = 8 + (body.statMod.attack || 0);
+    const initDef = 6 + (body.statMod.defense || 0);
     const d = {
+      id: `DF-${rand(1000,9999)}`,
       name: createName.trim(), title: createTitle, element: createElement,
       body: createBody, level: 1,
       hp: 100 + (body.statMod.maxHp || 0), maxHp: 100 + (body.statMod.maxHp || 0),
       mana: 70 + (body.statMod.maxMana || 0), maxMana: 70 + (body.statMod.maxMana || 0),
-      attack: 8 + (body.statMod.attack || 0), defense: 6 + (body.statMod.defense || 0),
+      attack: initAtk, defense: initDef,
+      baseAttack: initAtk, baseDefense: initDef,
       speed: 7 + (body.statMod.speed || 0),
       abilities: [...ABILITIES[createElement]], stage: 0,
     };
     setDragon(d); setGold(30); setXp(0); setXpNeeded(30);
-    setCollection([{ ...d, id: `DF-${rand(1000,9999)}` }]);
+    setCollection([{ ...d }]);
     setScreen("hub");
   };
 
@@ -1377,6 +1422,8 @@ export default function DragonSimulator() {
     await new Promise(r => setTimeout(r, 2500));
 
     const isHybrid = slotA !== slotB;
+    const hatchAtk = isHybrid ? 30 : 25;
+    const hatchDef = isHybrid ? 8 : 10;
     const newUnit = {
       id: `DF-${rand(1000,9999)}`,
       name: `${ELEMENTS[slotA].name.toUpperCase()}_UNIT`,
@@ -1384,7 +1431,8 @@ export default function DragonSimulator() {
       body: "balanced", level: 1, stage: 0,
       hp: isHybrid ? 110 : 100, maxHp: isHybrid ? 110 : 100,
       mana: 70, maxMana: 70,
-      attack: isHybrid ? 30 : 25, defense: isHybrid ? 8 : 10,
+      attack: hatchAtk, defense: hatchDef,
+      baseAttack: hatchAtk, baseDefense: hatchDef,
       speed: 7, abilities: [...ABILITIES[slotA]],
     };
 
@@ -1451,9 +1499,8 @@ export default function DragonSimulator() {
       log.push({ text: `${nA.name} uses ${ab.name}! +${h} HP!`, color: "#44ff88", icon: ab.icon });
       addFloat(`+${h}`, "#44ff88", isPlayer ? "player" : "enemy");
     } else if (ab.type === "buff") {
-      const isStat = ab.name.toLowerCase().includes("atk") || ab.name.toLowerCase().includes("cry") || ab.name.toLowerCase().includes("charge") || ab.name.toLowerCase().includes("pact");
-      if (isStat) { nA.attack += ab.value; } else { nA.defense += ab.value; }
-      log.push({ text: `${nA.name} uses ${ab.name}! +${ab.value} ${isStat ? "ATK" : "DEF"}!`, color: "#ffaa00", icon: ab.icon });
+      if (ab.stat === "attack") { nA.attack += ab.value; } else { nA.defense += ab.value; }
+      log.push({ text: `${nA.name} uses ${ab.name}! +${ab.value} ${ab.stat === "attack" ? "ATK" : "DEF"}!`, color: "#ffaa00", icon: ab.icon });
       addFloat(`+${ab.value}`, "#ffaa00", isPlayer ? "player" : "enemy");
     } else if (ab.type === "drain") {
       let dmg = Math.max(1, Math.round((ab.dmg + atkStat - defStat * 0.5) * mult));
@@ -1545,6 +1592,8 @@ export default function DragonSimulator() {
         if (newEvo.stage !== oldEvo.stage) {
           const ei = EVOLUTIONS.indexOf(newEvo);
           n.stage = ei;
+          n.baseAttack = (n.baseAttack || n.attack) + newEvo.bonus.attack;
+          n.baseDefense = (n.baseDefense || n.defense) + newEvo.bonus.defense;
           n.attack += newEvo.bonus.attack; n.defense += newEvo.bonus.defense;
           n.speed += newEvo.bonus.speed; n.maxHp += newEvo.bonus.maxHp;
           n.maxMana += newEvo.bonus.maxMana; n.hp = n.maxHp; n.mana = n.maxMana;
@@ -1596,7 +1645,7 @@ export default function DragonSimulator() {
 
   const startBattle = (bossIndex = null) => {
     const e = bossIndex !== null ? generateBoss(bossIndex) : generateEnemy(dragon.level, weather);
-    const d = { ...dragon, hp: dragon.maxHp, mana: dragon.maxMana };
+    const d = { ...dragon, hp: dragon.maxHp, mana: dragon.maxMana, attack: dragon.baseAttack || dragon.attack, defense: dragon.baseDefense || dragon.defense };
     d.abilities = [...ABILITIES[dragon.element], ...techniques.map(t => TECHNIQUES.find(te => te.name === t)).filter(Boolean)];
     setDragon(d); setEnemy(e); setBattleLog([]); setIsPlayerTurn(d.speed >= e.speed);
     setBattleOver(false); setFloatTexts([]); setParticles(null);
@@ -1637,8 +1686,8 @@ export default function DragonSimulator() {
     setGold(gold - cost);
     const d = { ...dragon };
     const g = rand(1, 3);
-    if (stat === "attack") d.attack += g;
-    else if (stat === "defense") d.defense += g;
+    if (stat === "attack") { d.attack += g; d.baseAttack = (d.baseAttack || d.attack) + g; }
+    else if (stat === "defense") { d.defense += g; d.baseDefense = (d.baseDefense || d.defense) + g; }
     else if (stat === "speed") d.speed += g;
     else if (stat === "maxHp") { d.maxHp += g*5; d.hp = d.maxHp; }
     else if (stat === "maxMana") { d.maxMana += g*3; d.mana = d.maxMana; }
@@ -1651,7 +1700,11 @@ export default function DragonSimulator() {
     const d = { ...dragon };
     if (item.stat === "maxHp") { d.maxHp += item.value; d.hp = d.maxHp; }
     else if (item.stat === "maxMana") { d.maxMana += item.value; d.mana = d.maxMana; }
-    else d[item.stat] = (d[item.stat] || 0) + item.value;
+    else {
+      d[item.stat] = (d[item.stat] || 0) + item.value;
+      if (item.stat === "attack") d.baseAttack = (d.baseAttack || 0) + item.value;
+      if (item.stat === "defense") d.baseDefense = (d.baseDefense || 0) + item.value;
+    }
     setDragon(d);
   };
 
@@ -1660,46 +1713,8 @@ export default function DragonSimulator() {
     setGold(gold - tech.price); setTechniques([...techniques, tech.name]);
   };
 
-  // ─── CSS ───
-  const css = `
-    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap');
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Fira Code', monospace; }
-    @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-40px); opacity: 0; } }
-    @keyframes particleBurst { 0% { transform: scale(0); opacity: 0.8; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(0) translateY(-20px); opacity: 0; } }
-    @keyframes fireRise { 0% { opacity: 0.9; transform: translateY(0) scale(0.5); } 40% { opacity: 1; transform: translateY(-15px) scale(1.2); } 100% { opacity: 0; transform: translateY(-45px) scale(0.3); } }
-    @keyframes iceShatter { 0% { opacity: 0; transform: scale(0); } 20% { opacity: 1; transform: scale(1.3); } 100% { opacity: 0; transform: scale(0.5) translate(var(--sx,10px), var(--sy,10px)); } }
-    @keyframes lightningFlash { 0% { opacity: 0; } 10% { opacity: 1; } 30% { opacity: 0; } 50% { opacity: 1; } 70% { opacity: 0.3; } 100% { opacity: 0; } }
-    @keyframes sparkFly { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0) translateY(-20px) translateX(var(--sx,15px)); } }
-    @keyframes venomDrip { 0% { opacity: 0; transform: translateY(-10px) scale(0.5); } 30% { opacity: 0.9; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(25px) scale(0.6); } }
-    @keyframes shadowWisp { 0% { opacity: 0; transform: scale(0.3) rotate(0deg); } 40% { opacity: 0.7; transform: scale(1) rotate(10deg); } 100% { opacity: 0; transform: scale(1.5) rotate(-10deg) translateY(-15px); } }
-    @keyframes rockBlast { 0% { opacity: 0; transform: scale(0) rotate(0deg); } 20% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0; transform: translateY(30px) translateX(var(--sx,20px)) rotate(180deg); } }
-    @keyframes healRise { 0% { opacity: 0; transform: translateY(10px) scale(0.5); } 50% { opacity: 1; transform: translateY(-5px) scale(1); } 100% { opacity: 0; transform: translateY(-25px) scale(0.3); } }
-    @keyframes slideIn { 0% { transform: translateY(20px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-    @keyframes evoFlash { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0; transform: scale(2); } }
-    @keyframes s-glow { 0% { filter: drop-shadow(0 0 5px #0f0); } 50% { filter: drop-shadow(0 0 10px #fff); } 100% { filter: drop-shadow(0 0 5px #0f0); } }
-    @keyframes weather-rain { 0% { transform: translateY(-30px) skewX(-15deg); } 100% { transform: translateY(30px) skewX(-15deg); } }
-    @keyframes weather-sand { 0% { transform: translateX(-20px) skewY(2deg); } 100% { transform: translateX(20px) skewY(2deg); } }
-    @keyframes weather-heat { 0%,100% { transform: scaleY(1); opacity: 0.3; } 50% { transform: scaleY(1.02); opacity: 0.6; } }
-    @keyframes u-glow { 0% { filter: drop-shadow(0 0 10px #f0f) hue-rotate(0deg); } 50% { filter: drop-shadow(0 0 20px #0ff) hue-rotate(180deg); } 100% { filter: drop-shadow(0 0 10px #f0f) hue-rotate(360deg); } }
-    .shiny-glow { animation: s-glow 2s linear infinite; }
-    .ultra-glow { animation: u-glow 1s linear infinite; }
-    .btn { background: #1a1a1a; border: 1px solid #333; color: #ccc; cursor: pointer; font-family: 'Fira Code', monospace; transition: all 0.2s; padding: 8px 12px; font-size: 10px; }
-    .btn:hover:not(:disabled) { background: #252525; border-color: #555; }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-primary { background: linear-gradient(135deg,#cc3300,#ff5522); border-color: #ff6633; color: #fff; font-weight: 700; }
-    .btn-primary:hover:not(:disabled) { background: linear-gradient(135deg,#dd4411,#ff6633); }
-    .btn-boss { background: linear-gradient(135deg,#551100,#882200); border-color: #aa3311; color: #ff8844; }
-    .nav-btn { background: none; border: none; color: #888; cursor: pointer; padding: 8px 14px; font-size: 11px; font-family: 'Fira Code', monospace; border-bottom: 2px solid transparent; }
-    .nav-btn.active { color: #44ff88; border-bottom-color: #44ff88; }
-    .nav-btn:hover { color: #aaa; }
-    .tab { background: none; border: none; border-bottom: 2px solid transparent; color: #666; cursor: pointer; padding: 6px 12px; font-size: 10px; font-family: 'Fira Code', monospace; text-transform: uppercase; letter-spacing: 1px; }
-    .tab.active { color: #44ff88; border-bottom-color: #44ff88; }
-    .tab:hover { color: #aaa; }
-    input, select { background: #111; border: 1px solid #333; color: #eee; padding: 6px 10px; font-family: 'Fira Code', monospace; font-size: 12px; outline: none; }
-    input:focus, select:focus { border-color: #44ff88; }
-  `;
+  // ─── CSS (module-level constant, see MODULE_CSS) ───
+  const css = MODULE_CSS;
 
   const pg = { width: "100%", minHeight: "100vh", background: "#000", color: "#eee", fontFamily: "'Fira Code', monospace", padding: 0, overflow: "auto", position: "relative" };
 

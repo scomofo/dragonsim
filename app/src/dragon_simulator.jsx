@@ -464,6 +464,10 @@ const ATTACK_SPRITE_SHEETS = {
 const SPRITE_COLS = 4;
 const SPRITE_ROWS = 2;
 const SPRITE_FRAMES = SPRITE_COLS * SPRITE_ROWS;
+// Attack sprite sheets: only the top row (frames 0-3) contains valid battle
+// animation. The bottom row holds lifecycle/hatch/projectile art that should
+// NOT play during combat.
+const ATTACK_FRAME_COUNT = SPRITE_COLS; // use only the first row (4 frames)
 const FRAME_W = 352;
 const FRAME_H = 384;
 
@@ -586,19 +590,23 @@ function DragonSprite({ element, size = 80, stage = 0, animate = false, flip = f
     loadAttackSheet(spriteElement, () => setAttackReady(true));
   }, [spriteElement]);
 
+  const useAttack = attacking && attackReady && ATTACK_SPRITE_SHEETS[spriteElement];
+  // Attack sheets: only cycle top row (0..ATTACK_FRAME_COUNT-1)
+  // Idle sheets: cycle all frames
+  const maxFrames = useAttack ? ATTACK_FRAME_COUNT : SPRITE_FRAMES;
+
   useEffect(() => {
     if (!animate || !ready) return;
     const id = setInterval(() => {
-      setFrame(f => (f + 1) % SPRITE_FRAMES);
+      setFrame(f => (f + 1) % maxFrames);
     }, 300);
     return () => clearInterval(id);
-  }, [animate, ready]);
+  }, [animate, ready, maxFrames]);
 
-  const useAttack = attacking && attackReady && ATTACK_SPRITE_SHEETS[spriteElement];
   const cacheKey = useAttack ? spriteElement + "_attack" : spriteElement;
   const entry = getSpriteFrames(cacheKey);
   const glow = stage >= 3;
-  const src = entry.ready ? entry.frames[frame] : null;
+  const src = entry.ready ? entry.frames[frame % maxFrames] : null;
 
   return (
     <div style={{
@@ -1564,8 +1572,9 @@ export default function DragonSimulator() {
       {/* Arena background */}
       <div style={{
         position: "absolute", inset: 0,
+        backgroundColor: "#1a1a2e",
         backgroundImage: `url(${titleArena})`,
-        backgroundSize: "100% 100%", backgroundPosition: "center",
+        backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat",
         filter: "brightness(0.3) contrast(1.3) saturate(1.2)",
         zIndex: 0,
       }} />
@@ -1960,8 +1969,9 @@ export default function DragonSimulator() {
           {/* Background image layer */}
           <div style={{
             position: "absolute", inset: 0,
+            backgroundColor: eEl.bg || "#1a1a2e",
             backgroundImage: `url(${arenaImg})`,
-            backgroundSize: "100% 100%", backgroundPosition: "center",
+            backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat",
             filter: isNullVoid ? "grayscale(1) invert(1) contrast(1.5)" : "brightness(0.6) contrast(1.2)",
             zIndex: 1,
           }} />

@@ -667,15 +667,143 @@ function SpellParticles({ fx, side }) {
   };
   const cs = colors[fx] || colors.fire;
   const x = side === "player" ? 70 : 25;
+  const dir = side === "player" ? 1 : -1;
+
+  // Distinct particle shapes and motion per element
+  if (fx === "fire") {
+    return (
+      <div style={{ position: "absolute", left: `${x}%`, top: "30%", pointerEvents: "none" }}>
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div key={i} style={{
+            position: "absolute",
+            width: rand(6, 14), height: rand(8, 18),
+            borderRadius: "50% 50% 50% 50% / 60% 60% 40% 40%",
+            background: `radial-gradient(ellipse, ${pick(cs)}, transparent)`,
+            left: rand(-20, 20), top: rand(-40, 10),
+            animation: `fireRise ${rand(4,8)/10}s ease-out forwards`,
+            animationDelay: `${i * 0.04}s`, opacity: 0,
+          }} />
+        ))}
+      </div>
+    );
+  }
+  if (fx === "ice") {
+    return (
+      <div style={{ position: "absolute", left: `${x}%`, top: "35%", pointerEvents: "none" }}>
+        {Array.from({ length: 10 }).map((_, i) => {
+          const size = rand(3, 8);
+          return (
+            <div key={i} style={{
+              position: "absolute",
+              width: size, height: size,
+              background: pick(cs), borderRadius: i % 3 === 0 ? "2px" : "50%",
+              boxShadow: `0 0 ${rand(4,8)}px ${pick(cs)}`,
+              left: rand(-35, 35), top: rand(-35, 35),
+              animation: `iceShatter ${rand(5,9)/10}s ease-out forwards`,
+              animationDelay: `${i * 0.03}s`, opacity: 0,
+              transform: `rotate(${rand(0,360)}deg)`,
+            }} />
+          );
+        })}
+      </div>
+    );
+  }
+  if (fx === "lightning") {
+    return (
+      <div style={{ position: "absolute", left: `${x}%`, top: "20%", pointerEvents: "none" }}>
+        {/* Lightning bolt segments */}
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} style={{
+            position: "absolute",
+            width: 2, height: rand(15, 30),
+            background: pick(cs), boxShadow: `0 0 8px ${pick(cs)}, 0 0 16px #ffdd0066`,
+            left: rand(-15, 15), top: i * 12,
+            transform: `skewX(${rand(-30, 30)}deg)`,
+            animation: `lightningFlash ${rand(1,3)/10}s ease-in-out ${3 + i}`,
+            animationDelay: `${i * 0.02}s`, opacity: 0,
+          }} />
+        ))}
+        {/* Sparks */}
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={`s${i}`} style={{
+            position: "absolute",
+            width: 3, height: 3, borderRadius: "50%",
+            background: "#ffee66", boxShadow: "0 0 6px #ffdd00",
+            left: rand(-25, 25), top: rand(0, 60),
+            animation: `sparkFly ${rand(3,6)/10}s ease-out forwards`,
+            animationDelay: `${i * 0.04}s`, opacity: 0,
+          }} />
+        ))}
+      </div>
+    );
+  }
+  if (fx === "nature") {
+    return (
+      <div style={{ position: "absolute", left: `${x}%`, top: "30%", pointerEvents: "none" }}>
+        {/* Venom drops */}
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} style={{
+            position: "absolute",
+            width: rand(5, 10), height: rand(7, 14),
+            borderRadius: "50% 50% 50% 50% / 30% 30% 70% 70%",
+            background: pick(cs), boxShadow: `0 0 6px ${pick(cs)}`,
+            left: rand(-30, 30), top: rand(-20, 30),
+            animation: `venomDrip ${rand(5,9)/10}s ease-in forwards`,
+            animationDelay: `${i * 0.06}s`, opacity: 0,
+          }} />
+        ))}
+      </div>
+    );
+  }
+  if (fx === "shadow") {
+    return (
+      <div style={{ position: "absolute", left: `${x}%`, top: "30%", pointerEvents: "none" }}>
+        {/* Shadow wisps */}
+        {Array.from({ length: 10 }).map((_, i) => (
+          <div key={i} style={{
+            position: "absolute",
+            width: rand(12, 24), height: rand(4, 8),
+            borderRadius: "50%",
+            background: `radial-gradient(ellipse, ${pick(cs)}88, transparent)`,
+            left: rand(-40, 40), top: rand(-30, 30),
+            animation: `shadowWisp ${rand(6,10)/10}s ease-in-out forwards`,
+            animationDelay: `${i * 0.05}s`, opacity: 0,
+          }} />
+        ))}
+      </div>
+    );
+  }
+  if (fx === "stone") {
+    return (
+      <div style={{ position: "absolute", left: `${x}%`, top: "35%", pointerEvents: "none" }}>
+        {/* Rock shards */}
+        {Array.from({ length: 8 }).map((_, i) => {
+          const w = rand(4, 10); const h = rand(4, 12);
+          return (
+            <div key={i} style={{
+              position: "absolute",
+              width: w, height: h, borderRadius: rand(1, 3),
+              background: pick(cs), boxShadow: `1px 1px 2px #0004`,
+              left: rand(-25, 25), top: rand(-25, 25),
+              animation: `rockBlast ${rand(4,7)/10}s ease-out forwards`,
+              animationDelay: `${i * 0.04}s`, opacity: 0,
+              transform: `rotate(${rand(0, 180)}deg)`,
+            }} />
+          );
+        })}
+      </div>
+    );
+  }
+  // heal / buff / generic fallback
   return (
     <div style={{ position: "absolute", left: `${x}%`, top: "35%", pointerEvents: "none" }}>
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} style={{
           position: "absolute",
           width: rand(4,8), height: rand(4,8), borderRadius: "50%",
-          background: pick(cs),
+          background: pick(cs), boxShadow: fx === "heal" ? `0 0 8px ${pick(cs)}` : "none",
           left: rand(-30,30), top: rand(-30,30),
-          animation: "particleBurst 0.8s ease forwards",
+          animation: `${fx === "heal" ? "healRise" : "particleBurst"} 0.8s ease forwards`,
           animationDelay: `${i*0.05}s`, opacity: 0,
         }} />
       ))}
@@ -1508,6 +1636,14 @@ export default function DragonSimulator() {
     body { font-family: 'Fira Code', monospace; }
     @keyframes floatUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-40px); opacity: 0; } }
     @keyframes particleBurst { 0% { transform: scale(0); opacity: 0.8; } 50% { transform: scale(1.5); opacity: 0.5; } 100% { transform: scale(0) translateY(-20px); opacity: 0; } }
+    @keyframes fireRise { 0% { opacity: 0.9; transform: translateY(0) scale(0.5); } 40% { opacity: 1; transform: translateY(-15px) scale(1.2); } 100% { opacity: 0; transform: translateY(-45px) scale(0.3); } }
+    @keyframes iceShatter { 0% { opacity: 0; transform: scale(0); } 20% { opacity: 1; transform: scale(1.3); } 100% { opacity: 0; transform: scale(0.5) translate(var(--sx,10px), var(--sy,10px)); } }
+    @keyframes lightningFlash { 0% { opacity: 0; } 10% { opacity: 1; } 30% { opacity: 0; } 50% { opacity: 1; } 70% { opacity: 0.3; } 100% { opacity: 0; } }
+    @keyframes sparkFly { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0) translateY(-20px) translateX(var(--sx,15px)); } }
+    @keyframes venomDrip { 0% { opacity: 0; transform: translateY(-10px) scale(0.5); } 30% { opacity: 0.9; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(25px) scale(0.6); } }
+    @keyframes shadowWisp { 0% { opacity: 0; transform: scale(0.3) rotate(0deg); } 40% { opacity: 0.7; transform: scale(1) rotate(10deg); } 100% { opacity: 0; transform: scale(1.5) rotate(-10deg) translateY(-15px); } }
+    @keyframes rockBlast { 0% { opacity: 0; transform: scale(0) rotate(0deg); } 20% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0; transform: translateY(30px) translateX(var(--sx,20px)) rotate(180deg); } }
+    @keyframes healRise { 0% { opacity: 0; transform: translateY(10px) scale(0.5); } 50% { opacity: 1; transform: translateY(-5px) scale(1); } 100% { opacity: 0; transform: translateY(-25px) scale(0.3); } }
     @keyframes slideIn { 0% { transform: translateY(20px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
     @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
     @keyframes evoFlash { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0; transform: scale(2); } }

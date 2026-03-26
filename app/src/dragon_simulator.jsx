@@ -929,7 +929,7 @@ function IntroSequence({ onComplete }) {
       {/* Video backdrop */}
       <video autoPlay muted loop playsInline style={{
         position: "absolute", inset: 0, width: "100%", height: "100%",
-        objectFit: "cover", objectPosition: "center top", zIndex: 0, opacity: 0.25,
+        objectFit: "contain", objectPosition: "center", zIndex: 0, opacity: 0.25,
         filter: "brightness(0.5) saturate(1.5) hue-rotate(10deg)",
       }}>
         <source src="/Crystal_Shell.mp4" type="video/mp4" />

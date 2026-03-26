@@ -672,7 +672,7 @@ function SpellParticles({ fx, side }) {
   // Distinct particle shapes and motion per element
   if (fx === "fire") {
     return (
-      <div style={{ position: "absolute", left: `${x}%`, top: "30%", pointerEvents: "none" }}>
+      <div style={{ position: "absolute", left: `${x}%`, top: "30%", pointerEvents: "none", zIndex: 10 }}>
         {Array.from({ length: 12 }).map((_, i) => (
           <div key={i} style={{
             position: "absolute",
@@ -689,7 +689,7 @@ function SpellParticles({ fx, side }) {
   }
   if (fx === "ice") {
     return (
-      <div style={{ position: "absolute", left: `${x}%`, top: "35%", pointerEvents: "none" }}>
+      <div style={{ position: "absolute", left: `${x}%`, top: "35%", pointerEvents: "none", zIndex: 10 }}>
         {Array.from({ length: 10 }).map((_, i) => {
           const size = rand(3, 8);
           return (
@@ -710,7 +710,7 @@ function SpellParticles({ fx, side }) {
   }
   if (fx === "lightning") {
     return (
-      <div style={{ position: "absolute", left: `${x}%`, top: "20%", pointerEvents: "none" }}>
+      <div style={{ position: "absolute", left: `${x}%`, top: "20%", pointerEvents: "none", zIndex: 10 }}>
         {/* Lightning bolt segments */}
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} style={{
@@ -739,7 +739,7 @@ function SpellParticles({ fx, side }) {
   }
   if (fx === "nature") {
     return (
-      <div style={{ position: "absolute", left: `${x}%`, top: "30%", pointerEvents: "none" }}>
+      <div style={{ position: "absolute", left: `${x}%`, top: "30%", pointerEvents: "none", zIndex: 10 }}>
         {/* Venom drops */}
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} style={{
@@ -757,7 +757,7 @@ function SpellParticles({ fx, side }) {
   }
   if (fx === "shadow") {
     return (
-      <div style={{ position: "absolute", left: `${x}%`, top: "30%", pointerEvents: "none" }}>
+      <div style={{ position: "absolute", left: `${x}%`, top: "30%", pointerEvents: "none", zIndex: 10 }}>
         {/* Shadow wisps */}
         {Array.from({ length: 10 }).map((_, i) => (
           <div key={i} style={{
@@ -775,7 +775,7 @@ function SpellParticles({ fx, side }) {
   }
   if (fx === "stone") {
     return (
-      <div style={{ position: "absolute", left: `${x}%`, top: "35%", pointerEvents: "none" }}>
+      <div style={{ position: "absolute", left: `${x}%`, top: "35%", pointerEvents: "none", zIndex: 10 }}>
         {/* Rock shards */}
         {Array.from({ length: 8 }).map((_, i) => {
           const w = rand(4, 10); const h = rand(4, 12);
@@ -796,7 +796,7 @@ function SpellParticles({ fx, side }) {
   }
   // heal / buff / generic fallback
   return (
-    <div style={{ position: "absolute", left: `${x}%`, top: "35%", pointerEvents: "none" }}>
+    <div style={{ position: "absolute", left: `${x}%`, top: "35%", pointerEvents: "none", zIndex: 10 }}>
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} style={{
           position: "absolute",

@@ -3,4 +3,8 @@ dist/
 *.db
 .env
 .claude/
+.claude-flow/
+.mcp.json
 dragonsim/
+*_bak*
+Gemini_Generated_Image_*

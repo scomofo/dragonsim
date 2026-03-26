@@ -124,12 +124,24 @@ function playSound(key, opts = {}) {
 // ─── ELEMENTAL MATRIX (Master Specs) ───
 // 6 core elements with strengths/weaknesses per spec + void endgame
 const ELEMENTS = {
-  fire:      { name: "Magma",   emoji: "\u{1F525}", color: "#ff4422", accent: "#ff8844", bg: "#331108", weakness: "ice",       strong: ["ice", "stone"],         arena: "/arenas/fire.png" },
-  ice:       { name: "Ice",     emoji: "\u2744\uFE0F",  color: "#44bbff", accent: "#88ddff", bg: "#081828", weakness: "fire",      strong: ["venom", "lightning"],    arena: "/arenas/ice.png" },
-  lightning: { name: "Static",  emoji: "\u26A1",    color: "#ffdd00", accent: "#ffee66", bg: "#282008", weakness: "stone",     strong: ["fire", "venom"],         arena: "/arenas/storm.png" },
-  nature:    { name: "Venom",   emoji: "\u{1F40D}", color: "#76ff03", accent: "#88ff99", bg: "#082810", weakness: "lightning", strong: ["shadow", "lightning"],   arena: "/arenas/venom.png" },
-  shadow:    { name: "Shadow",  emoji: "\u{1F311}", color: "#9944ff", accent: "#bb88ff", bg: "#180828", weakness: "nature",    strong: ["lightning", "stone"],     arena: "/arenas/shadow.png" },
-  stone:     { name: "Stone",   emoji: "\u{1FAA8}", color: "#a1887f", accent: "#bcaaa4", bg: "#1a1008", weakness: "fire",      strong: ["lightning", "ice"],       arena: "/arenas/stone.png" },
+  fire:      { name: "Magma",   emoji: "\u{1F525}", color: "#ff4422", accent: "#ff8844", bg: "#331108", weakness: "ice",       strong: ["ice", "stone"],         arena: "/arenas/fire.png",
+    lore: "Scorchers of the Depths. Born from cracked lava, they serve as the Forge's thermal reactors. Their sustained magma breath regulates the simulation's core temperature.",
+    role: "Thermal Reactor" },
+  ice:       { name: "Ice",     emoji: "\u2744\uFE0F",  color: "#44bbff", accent: "#88ddff", bg: "#081828", weakness: "fire",      strong: ["venom", "lightning"],    arena: "/arenas/ice.png",
+    lore: "Hunters of the Frost. Guardians of the Forge's cold-storage archives. Their cryo-breath stabilizes critical sectors during high-stress simulation events.",
+    role: "Cryo-Stabilizer" },
+  lightning: { name: "Static",  emoji: "\u26A1",    color: "#ffdd00", accent: "#ffee66", bg: "#282008", weakness: "stone",     strong: ["fire", "venom"],         arena: "/arenas/storm.png",
+    lore: "Masters of Energy. The electrical conduits of the Forge, channeling power between Solar sources and Magma reactors. Fast, unpredictable, and devastating.",
+    role: "Energy Conduit" },
+  nature:    { name: "Venom",   emoji: "\u{1F40D}", color: "#76ff03", accent: "#88ff99", bg: "#082810", weakness: "lightning", strong: ["shadow", "lightning"],   arena: "/arenas/venom.png",
+    lore: "The Corrosive Ones. They emerged from the swamps of corrupted data, dissolving unstable code with their acid. Patient predators who outlast their prey.",
+    role: "Code Purifier" },
+  shadow:    { name: "Shadow",  emoji: "\u{1F311}", color: "#9944ff", accent: "#bb88ff", bg: "#180828", weakness: "nature",    strong: ["lightning", "stone"],     arena: "/arenas/shadow.png",
+    lore: "Keepers of the Void. Shadow stalkers that inhabit the spaces between processed data. They move through the simulation's blind spots, unseen until they strike.",
+    role: "Void Walker" },
+  stone:     { name: "Stone",   emoji: "\u{1FAA8}", color: "#a1887f", accent: "#bcaaa4", bg: "#1a1008", weakness: "fire",      strong: ["lightning", "ice"],       arena: "/arenas/stone.png",
+    lore: "The Unyielding Foundation. Carved from the bedrock of the Forge's architecture, they anchor reality itself. What they lack in speed, they repay in endurance.",
+    role: "Foundation Anchor" },
 };
 
 // Void element for endgame
@@ -350,17 +362,31 @@ const CORRUPTED_NPCS = [
 
 // ─── FELIX MESSAGES ───
 const FELIX_MSGS = {
-  hatchery: "DRAGON_FORGE v1.0: System Online. Load essence into the splicing tray to begin recombination.",
-  compiling: "CRITICAL: Synthesizing recombinant DNA strands. Do not power off.",
-  successPure: "SUCCESS: Pure-blood strain compiled. Optimal data-structure achieved.",
-  successHybrid: "SUCCESS: Hybridization complete. Minor instability detected, but the code is holding!",
-  combat: "Simulation parameters locked. Initiating combat sub-routines...",
-  victory: "TARGET_DELETED: Extraction complete. Salvaging data-fragments...",
-  defeat: "CRITICAL_FAILURE: Subject integrity compromised. Recommend immediate repair cycle.",
-  journal: "Accessing specimen database. All data-streams nominal.",
-  boss: "The Singularity has breached the firewall. Deploy full roster!",
-  nullVoid: "WARNING: Null Void detected. System stability critical.",
+  hatchery: "Slot the carrier into the analysis port and try not to ignite the atmosphere. We're converting raw data into elemental cores — your dragons are the Forge's immune system.",
+  compiling: "CRITICAL: Synthesizing recombinant DNA strands. Do NOT power off! The resonance limit is a suggestion, not a target — but we're pushing it anyway.",
+  successPure: "Pure-blood strain compiled. Optimal data-structure achieved. This one carries the original code of the Primordial Forge. Handle with reverence... or recklessness. Your choice.",
+  successHybrid: "Hybridization complete! Minor instability detected, but the code is holding. Cross-elemental splicing was forbidden for a reason — let's find out why.",
+  combat: "Simulation parameters locked. The corruption has turned peaceful Lumiri into techno-organic abominations. Show no mercy — they're already dead code.",
+  victory: "Target deleted. Salvaging data-fragments... Every corrupted process you purge brings the Forge one cycle closer to restoration. Don't let it go to your head.",
+  defeat: "Subject integrity compromised! I told you the resonance limit was dangerous. Get to the repair bay before your dragon's code degrades to junk data.",
+  journal: "Accessing the specimen compendium. Every dragon you've catalogued is a living proof of the evolution of digital complexity. Impressive... for an amateur.",
+  boss: "The Abomination has sent its Architect. This isn't a routine purge — this is the endgame. Deploy everything. I'll be monitoring from my basement. For God's sake, don't die.",
+  nullVoid: "Null Void detected — reality itself is unraveling. The columns of darkness are consuming this sector. We need to restore the core before there's nothing left to save.",
 };
+
+// Contextual Felix battle quips — randomly shown during combat
+const FELIX_BATTLE_QUIPS = [
+  "Stop playing with your food and finish it!",
+  "I didn't boost the spectrometer to 105% for you to lose to a corrupted subroutine.",
+  "Use your elemental advantage! Did they not teach you basic thermodynamics?",
+  "That creature used to be a peaceful data-stream. Now look at it. The Abomination's cruelty knows no bounds.",
+  "Why do we all have to wear these ridiculous ties anyway?",
+  "I planned my whole week around those donuts. SIX empty boxes. Focus!",
+  "The Forge's Old Gods designed competition to drive evolution. Prove them right.",
+  "Your dragon's bond with you IS the weapon. The Abomination can delete code, but it can't delete trust.",
+  "Minor setback. Recalibrate and strike again. I've seen worse — I caused worse.",
+  "If you survive this, remind me to tell you about the first Resonance Cascade. Spoiler: it was my fault.",
+];
 
 // ═══════════════════════════════════════════════════════════════
 // COMPONENTS
@@ -813,16 +839,19 @@ function SpellParticles({ fx, side }) {
 
 // ─── INTRO SEQUENCE: "THE SINGULARITY BREACH" ───
 const INTRO_LINES = [
-  { tag: "SYSTEM", text: "INITIALIZING FORGE_OS_V9.0...", delay: 800 },
-  { tag: "SYSTEM", text: "LOADING ELEMENTAL CORE MATRIX...", delay: 600 },
-  { tag: "SYSTEM", text: "WARNING: THE SINGULARITY HAS BREACHED THE SECTOR 7 FIREWALL.", delay: 1200 },
-  { tag: "SYSTEM", text: "REALITY STABILITY AT 14% AND DROPPING.", delay: 1000 },
-  { tag: "SYSTEM", text: "EMERGENCY PROTOCOL ACTIVATED.", delay: 800 },
-  { tag: "COMMS",  text: "PROFESSOR FELIX HERE. IF YOU CAN READ THIS, YOU ARE OUR LAST NODE.", delay: 1400 },
-  { tag: "COMMS",  text: "THE BREACH IS CONSUMING EVERYTHING. ALL DATA IS BEING CORRUPTED.", delay: 1200 },
-  { tag: "COMMS",  text: "WE ARE CONVERTING REMAINING DATA INTO ELEMENTAL CORES.", delay: 1000 },
-  { tag: "COMMS",  text: "HATCH THE DRAGONS. FIGHT THE CODE. SAVE THE WORLD.", delay: 1400 },
-  { tag: "SYSTEM", text: "SIMULATION READY. AWAITING OPERATOR INPUT...", delay: 1000 },
+  { tag: "SYSTEM", text: "INITIALIZING DIGITAL_FORGE_OS_V9.0...", delay: 800 },
+  { tag: "SYSTEM", text: "LOADING ELEMENTAL CORE MATRIX... SECTOR INTEGRITY CHECK...", delay: 700 },
+  { tag: "SYSTEM", text: "WARNING: RESONANCE CASCADE DETECTED. THE SINGULARITY HAS BREACHED SECTOR 7.", delay: 1200 },
+  { tag: "SYSTEM", text: "TOWERING COLUMNS OF DARKNESS RISING. REALITY STABILITY AT 14%.", delay: 1000 },
+  { tag: "SYSTEM", text: "CORRUPTED CODE SPREADING THROUGH ALL QUADRANTS. LUMIRI TURNING HOSTILE.", delay: 1000 },
+  { tag: "SYSTEM", text: "EMERGENCY PROTOCOL: LAST NODE ACTIVATION.", delay: 800 },
+  { tag: "COMMS",  text: "Get away from that terminal, you digital flea! ...Wait. You're still online?", delay: 1400 },
+  { tag: "COMMS",  text: "Professor Felix here. The Mechanical Abomination has achieved the Singularity.", delay: 1200 },
+  { tag: "COMMS",  text: "It's rewriting the Forge's physics. Turning peaceful code into monsters.", delay: 1100 },
+  { tag: "COMMS",  text: "We're converting the last uncorrupted data into elemental dragon cores.", delay: 1000 },
+  { tag: "COMMS",  text: "Hatch them. Bond with them. They are the only weapons the Abomination can't delete.", delay: 1400 },
+  { tag: "COMMS",  text: "The fate of every uploaded consciousness depends on what you do next.", delay: 1200 },
+  { tag: "SYSTEM", text: "FORGE SPECTROMETER BOOSTED TO 105%. AWAITING OPERATOR INPUT...", delay: 1000 },
 ];
 
 function IntroSequence({ onComplete }) {
@@ -1490,6 +1519,8 @@ export default function DragonSimulator() {
     let d = res.a; let e = res.d;
     let log = [...battleLog, ...res.log];
     let ep = res.ep; let pp = res.pp;
+    // Felix quips randomly during combat (~30% chance)
+    if (Math.random() < 0.3) setFelixMsg(pick(FELIX_BATTLE_QUIPS));
 
     if (pp > 0) { const pr = applyPoison(d, pp); d = pr.target; pp = pr.turns; log = [...log, ...pr.log]; }
 
@@ -1739,7 +1770,7 @@ export default function DragonSimulator() {
     return (
       <div style={{ ...pg, maxWidth: 520, margin: "0 auto", padding: 20 }}>
         <style>{css}</style><Scanlines />
-        <FelixComms message="Welcome, Overseer. Configure your initial specimen and we shall begin the simulation." />
+        <FelixComms message="Ah, you survived the breach. Standard insertion for a nonstandard specimen — configure your dragon's core and we'll see if the Forge accepts you as worthy." />
         <h2 style={{ fontSize: 14, textAlign: "center", marginBottom: 16, color: "#44ff88" }}>// FORGE_YOUR_DRAGON</h2>
         <div style={{ textAlign: "center", marginBottom: 16 }}>
           <DragonSprite element={createElement} size={100} animate />
@@ -1766,6 +1797,14 @@ export default function DragonSimulator() {
                 <div style={{ fontSize: 8, color: createElement === k ? v.color : "#888" }}>{v.name}</div>
               </button>
             ))}
+          </div>
+          {/* Element lore panel */}
+          <div style={{ marginTop: 8, padding: "8px 10px", background: `${se.color}11`, borderLeft: `2px solid ${se.color}`, borderRadius: 4, fontSize: 10, lineHeight: 1.5 }}>
+            <div style={{ color: se.color, fontWeight: 700, marginBottom: 3 }}>{se.emoji} {se.name} — {se.role}</div>
+            <div style={{ color: "#999" }}>{se.lore}</div>
+            <div style={{ color: "#666", marginTop: 4, fontSize: 9 }}>
+              Strong vs: {se.strong.map(s => ELEMENTS[s]?.emoji || s).join(" ")} &middot; Weak to: {ELEMENTS[se.weakness]?.emoji || se.weakness}
+            </div>
           </div>
         </div>
         <div style={{ ...UI.panel, marginBottom: 16 }}>

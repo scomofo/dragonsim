@@ -1710,13 +1710,13 @@ export default function DragonSimulator() {
         position: "absolute", inset: 0,
         backgroundColor: "#1a1a2e",
         backgroundImage: `url(${titleArena})`,
-        backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat",
+        backgroundSize: "cover", backgroundPosition: "center top", backgroundRepeat: "no-repeat",
         filter: "brightness(0.3) contrast(1.3) saturate(1.2)",
         zIndex: 0,
       }} />
       <div style={{
         position: "absolute", inset: 0,
-        background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 40%, transparent 60%, rgba(0,0,0,0.6) 100%)",
+        background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 35%, transparent 70%, rgba(0,0,0,0.3) 100%)",
         zIndex: 1, pointerEvents: "none",
       }} />
       <div style={{ animation: "slideIn 1s ease", textAlign: "center", padding: 20, position: "relative", zIndex: 2 }}>

@@ -1,0 +1,230 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Database, Zap, Beaker, Dna, Box, RefreshCcw, 
+  Sword, Shield, Activity, Terminal, ChevronRight, BookOpen
+} from 'lucide-react';
+
+// ─── CONSTANTS & ASSET MAPPING ───
+const ELEMENTS = {
+  fire: { 
+    name: "Magma", emoji: "🔥", color: "#ff4422", accent: "#ff8844", 
+    sheet: "magma_base_sheet.png", fx: "magma_ember.png", bg: "arena_magma.png",
+    weakness: "ice", strong: ["ice", "stone"] 
+  },
+  ice: { 
+    name: "Ice", emoji: "❄️", color: "#44bbff", accent: "#88ddff", 
+    sheet: "ice_base_sheet.png", fx: "ice_shard.png", bg: "arena_ice.png",
+    weakness: "lightning", strong: ["venom", "solar"] 
+  },
+  lightning: { 
+    name: "Static", emoji: "⚡", color: "#ffdd00", accent: "#ffee66", 
+    sheet: "static_base_sheet.png", fx: "static_spark.png", bg: "arena_static.png",
+    weakness: "stone", strong: ["magma", "venom"] 
+  },
+  nature: { 
+    name: "Nature", emoji: "🌿", color: "#44dd66", accent: "#88ff99", 
+    sheet: "nature_base_sheet.png", fx: "nature_droplet.png", bg: "arena_nature.png",
+    weakness: "fire", strong: ["lightning"] 
+  },
+  shadow: { 
+    name: "Shadow", emoji: "🌑", color: "#9944ff", accent: "#bb88ff", 
+    sheet: "shadow_base_sheet.png", fx: "shadow_smoke.png", bg: "arena_shadow.png",
+    weakness: "solar", strong: ["static", "stone"] 
+  }
+};
+
+/**
+ * ANIMATION COMPONENT
+ * Handles 6-frame sprite sheet logic based on ASSET_GEN_GUIDE.md
+ * Frames: 1-2 Idle, 3 Charge, 4 Attack, 5 Recoil, 6 Return
+ */
+const DragonSprite = ({ element, stage, state = 'idle', size = 64 }) => {
+  const [frame, setFrame] = useState(0);
+  const sheet = ELEMENTS[element]?.sheet || "";
+
+  useEffect(() => {
+    let interval;
+    if (state === 'idle') {
+      interval = setInterval(() => setFrame(f => (f === 0 ? 1 : 0)), 400); // Frames 1-2
+    } else if (state === 'attack') {
+      setFrame(2); // Charge
+      setTimeout(() => setFrame(3), 300); // Execute
+      setTimeout(() => setFrame(5), 600); // Return
+    } else if (state === 'hit') {
+      setFrame(4); // Recoil
+    }
+    return () => clearInterval(interval);
+  }, [state]);
+
+  const scale = [0.5, 0.75, 1.0, 1.4][stage - 1];
+
+  return (
+    <div style={{
+      width: `${size}px`,
+      height: `${size}px`,
+      backgroundImage: `url(${sheet})`,
+      backgroundSize: `${size * 6}px ${size}px`,
+      backgroundPosition: `-${frame * size}px 0px`,
+      imageRendering: 'pixelated',
+      transform: `scale(${scale})`,
+      filter: stage === 4 ? 'drop-shadow(0 0 5px gold)' : 'none',
+      transition: 'transform 0.3s ease'
+    }} />
+  );
+};
+
+// ─── MAIN APP COMPONENT ───
+export default function App() {
+  const [view, setView] = useState('hatchery'); // hatchery, combat, journal
+  const [essences, setEssences] = useState({ fire: 50, ice: 20, lightning: 10, nature: 10, shadow: 5 });
+  const [collection, setCollection] = useState([
+    { id: "DF-001", name: "SCORCH_TALON", element: "fire", stage: 1, hp: 100, maxHp: 100, atk: 25 }
+  ]);
+
+  const UI_STYLES = {
+    container: { background: "#000", minHeight: "100vh", color: "#eee", fontFamily: "'Fira Code', monospace", position: "relative" },
+    panel: { background: "#111", border: "1px solid #333", padding: "12px" },
+    scanlines: { position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%), linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,0,0.03))", backgroundSize: "100% 3px, 3px 100%", pointerEvents: "none", zIndex: 1000 }
+  };
+
+  return (
+    <div style={UI_STYLES.container}>
+      <div style={UI_STYLES.scanlines} />
+      
+      {/* NAVIGATION HEADER */}
+      <nav style={{ ...UI_STYLES.panel, display: "flex", gap: "20px", borderBottom: "1px solid #444", marginBottom: "20px" }}>
+        <button onClick={() => setView('hatchery')} style={{ color: view === 'hatchery' ? "#44ff88" : "#888", background: "none", border: "none", cursor: "pointer", fontSize: "11px" }}>[ HATCHERY ]</button>
+        <button onClick={() => setView('combat')} style={{ color: view === 'combat' ? "#44ff88" : "#888", background: "none", border: "none", cursor: "pointer", fontSize: "11px" }}>[ COMBAT ]</button>
+        <button onClick={() => setView('journal')} style={{ color: view === 'journal' ? "#44ff88" : "#888", background: "none", border: "none", cursor: "pointer", fontSize: "11px" }}>[ JOURNAL ]</button>
+      </nav>
+
+      <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "0 20px" }}>
+        {view === 'hatchery' && <HatcheryView essences={essences} setEssences={setEssences} setCollection={setCollection} UI_STYLES={UI_STYLES} />}
+        {view === 'combat' && <CombatView playerDragon={collection[0]} UI_STYLES={UI_STYLES} />}
+        {view === 'journal' && <JournalView collection={collection} UI_STYLES={UI_STYLES} />}
+      </main>
+    </div>
+  );
+}
+
+// ─── SUB-VIEWS ───
+
+function HatcheryView({ essences, setEssences, setCollection, UI_STYLES }) {
+  const [slotA, setSlotA] = useState(null);
+  const [slotB, setSlotB] = useState(null);
+  const [isCompiling, setIsCompiling] = useState(false);
+
+  const compile = async () => {
+    if (!slotA || !slotB) return;
+    setIsCompiling(true);
+    await new Promise(r => setTimeout(r, 2000));
+    
+    const newUnit = {
+      id: `DF-${Math.floor(Math.random()*9000)+1000}`,
+      name: `${slotA.toUpperCase()}_UNIT`,
+      element: slotA,
+      stage: 1,
+      hp: 100, maxHp: 100, atk: 25
+    };
+
+    setCollection(prev => [...prev, newUnit]);
+    setEssences(prev => ({ ...prev, [slotA]: prev[slotA]-5, [slotB]: prev[slotB]-5 }));
+    setIsCompiling(false);
+    setSlotA(null); setSlotB(null);
+  };
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+      <div style={UI_STYLES.panel}>
+        <div style={{ fontSize: "12px", color: "#44ff88", marginBottom: "10px" }}>// ESSENCE_INVENTORY</div>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          {Object.entries(ELEMENTS).map(([key, el]) => (
+            <button key={key} onClick={() => !slotA ? setSlotA(key) : setSlotB(key)} style={{ background: "#222", border: "1px solid #444", padding: "8px", color: el.color, cursor: "pointer", fontSize: "10px" }}>
+              {el.emoji} {essences[key]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ ...UI_STYLES.panel, textAlign: "center" }}>
+        <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginBottom: "20px" }}>
+          <div style={{ width: "50px", height: "50px", border: "1px dashed #444", display: "flex", alignItems: "center", justifyContent: "center" }}>{slotA && ELEMENTS[slotA].emoji}</div>
+          <div style={{ width: "50px", height: "50px", border: "1px dashed #444", display: "flex", alignItems: "center", justifyContent: "center" }}>{slotB && ELEMENTS[slotB].emoji}</div>
+        </div>
+        <button onClick={compile} disabled={isCompiling || !slotA || !slotB} style={{ background: "#44ff88", color: "#000", border: "none", padding: "10px 20px", fontWeight: "bold", cursor: "pointer", opacity: isCompiling ? 0.5 : 1 }}>
+          {isCompiling ? "COMPILING..." : "INITIATE_SPLICING.SH"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CombatView({ playerDragon, UI_STYLES }) {
+  const [state, setState] = useState('READY');
+  const [enemy] = useState({ name: "WILD_UNIT", element: "ice", stage: 1, hp: 100, maxHp: 100 });
+  const [pAnim, setPAnim] = useState('idle');
+  const [eAnim, setEAnim] = useState('idle');
+
+  const executeAttack = async () => {
+    setState('BUSY');
+    setPAnim('attack');
+    await new Promise(r => setTimeout(r, 800));
+    setEAnim('hit');
+    await new Promise(r => setTimeout(r, 400));
+    setEAnim('idle');
+    setPAnim('idle');
+    setState('READY');
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      {/* ARENA WITH ELEMENTAL BACKGROUND */}
+      <div style={{ 
+        ...UI_STYLES.panel, 
+        height: "300px", 
+        backgroundImage: `url(${ELEMENTS[enemy.element].bg})`,
+        backgroundSize: "cover",
+        position: "relative",
+        display: "flex",
+        justifyContent: "space-around",
+        alignItems: "flex-end",
+        paddingBottom: "40px"
+      }}>
+        <div style={{ position: "absolute", top: 10, left: 10, background: "rgba(0,0,0,0.7)", padding: "4px", fontSize: "9px" }}>AREA: {ELEMENTS[enemy.element].name.toUpperCase()}_ZONE</div>
+        
+        <DragonSprite element={playerDragon.element} stage={playerDragon.stage} state={pAnim} size={80} />
+        <DragonSprite element={enemy.element} stage={enemy.stage} state={eAnim} size={80} />
+      </div>
+
+      <div style={UI_STYLES.panel}>
+        <button onClick={executeAttack} disabled={state === 'BUSY'} style={{ background: "#ff4422", color: "#fff", border: "none", padding: "10px 30px", fontWeight: "bold", cursor: "pointer" }}>EXECUTE_STRIKE</button>
+      </div>
+    </div>
+  );
+}
+
+function JournalView({ collection, UI_STYLES }) {
+  const [selected, setSelected] = useState(0);
+  const active = collection[selected];
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "20px" }}>
+      <div style={UI_STYLES.panel}>
+        {collection.map((d, i) => (
+          <div key={d.id} onClick={() => setSelected(i)} style={{ padding: "10px", borderBottom: "1px solid #222", cursor: "pointer", color: selected === i ? "#44ff88" : "#888" }}>
+            {d.name} <span style={{ fontSize: "9px" }}>[STG_{d.stage}]</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ ...UI_STYLES.panel, display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
+        <h2 style={{ color: ELEMENTS[active.element].color }}>{active.name}</h2>
+        <div style={{ background: "#050505", border: "1px solid #222", padding: "40px", width: "100%", display: "flex", justifyContent: "center" }}>
+          <DragonSprite element={active.element} stage={active.stage} size={128} />
+        </div>
+        <div style={{ fontSize: "11px", color: "#666", textAlign: "center" }}>
+          ELEMENT: {active.element.toUpperCase()} | STRENGTH: {ELEMENTS[active.element].strong.join(', ')}
+        </div>
+      </div>
+    </div>
+  );
+}

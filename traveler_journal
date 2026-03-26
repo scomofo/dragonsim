@@ -1,0 +1,108 @@
+import React, { useState } from 'react';
+import { Book, Shield, Zap, Flame, Info, ChevronRight, Hash } from 'lucide-react';
+
+/**
+ * DRAGON FORGE: SPECIMEN JOURNAL
+ * Logic and visual alignment with the Cyber-Retro laboratory theme.
+ */
+
+const ELEMENTS = {
+  fire: { color: "#ff4422", emoji: "🔥" },
+  ice: { color: "#44bbff", emoji: "❄️" },
+  lightning: { color: "#ffdd00", emoji: "⚡" },
+  nature: { color: "#44dd66", emoji: "🌿" },
+  shadow: { color: "#9944ff", emoji: "🌑" }
+};
+
+export default function Journal() {
+  const [selected, setSelected] = useState(0);
+  const [dragons] = useState([
+    { id: "DF-001", name: "SCORCH_TALON", element: "fire", stage: 3, hp: 450, atk: 68 },
+    { id: "DF-042", name: "VOLT_SPECTER", element: "lightning", stage: 1, hp: 120, atk: 45 },
+    { id: "DF-099", name: "NULL_VOID", element: "shadow", stage: 2, hp: 310, atk: 52 }
+  ]);
+
+  const UI_STYLES = {
+    panel: { background: "#111", border: "1px solid #333", padding: "12px", position: "relative" },
+    text: { fontFamily: "'Fira Code', monospace", fontSize: "11px", color: "#888" },
+    heading: { fontWeight: "bold", fontSize: "12px", letterSpacing: "1px", color: "#eee", marginBottom: "12px", borderBottom: "1px solid #222", pb: "4px" },
+    row: { display: "flex", alignItems: "center", padding: "10px", borderBottom: "1px solid #222", cursor: "pointer", transition: "0.2s" }
+  };
+
+  const active = dragons[selected];
+
+  return (
+    <div style={{ background: "#000", minHeight: "100vh", padding: "20px", color: "#eee" }}>
+       {/* SCANLINES */}
+       <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%), linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,0,0.03))", backgroundSize: "100% 3px, 3px 100%", pointerEvents: "none", zIndex: 1000 }} />
+
+       <div style={{ maxWidth: "1000px", margin: "0 auto", display: "grid", gridTemplateColumns: "350px 1fr", gap: "20px" }}>
+         
+         {/* SPECIMEN LIST */}
+         <div style={UI_STYLES.panel}>
+           <div style={UI_STYLES.heading}>SPECIMEN_DATABASE</div>
+           <div style={{ display: "flex", flexDirection: "column" }}>
+             {dragons.map((d, i) => (
+               <div 
+                key={d.id} 
+                onClick={() => setSelected(i)}
+                style={{ ...UI_STYLES.row, background: selected === i ? "#1a1a1a" : "transparent" }}
+               >
+                 <div style={{ width: "30px", fontSize: "16px" }}>{ELEMENTS[d.element].emoji}</div>
+                 <div style={{ flex: 1 }}>
+                    <div style={{ ...UI_STYLES.text, color: selected === i ? "#44ff88" : "#eee", fontSize: "12px", fontWeight: "bold" }}>{d.name}</div>
+                    <div style={{ ...UI_STYLES.text, fontSize: "9px" }}>{d.id} // STAGE_{d.stage}</div>
+                 </div>
+                 <ChevronRight size={14} color={selected === i ? "#44ff88" : "#333"} />
+               </div>
+             ))}
+           </div>
+         </div>
+
+         {/* SPECIMEN DETAILS */}
+         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            <div style={{ ...UI_STYLES.panel, flex: 1 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div>
+                  <div style={{ ...UI_STYLES.text, color: ELEMENTS[active.element].color }}>{active.element.toUpperCase()}_CLASS_ENTITY</div>
+                  <h1 style={{ fontSize: "28px", fontWeight: "900", letterSpacing: "-1px", margin: "5px 0" }}>{active.name}</h1>
+                </div>
+                <div style={{ ...UI_STYLES.text, background: "#222", padding: "4px 10px", borderRadius: "2px" }}>UID: {active.id}</div>
+              </div>
+
+              {/* RENDER VIEWPORT */}
+              <div style={{ height: "200px", background: "#050505", border: "1px solid #222", margin: "20px 0", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                 <div style={{ position: "absolute", top: 10, right: 10, ...UI_STYLES.text, fontSize: "9px" }}>[RENDER_V2.0]</div>
+                 <div style={{ fontSize: "80px", filter: `drop-shadow(0 0 20px ${ELEMENTS[active.element].color}44)`, transform: `scale(${0.8 + active.stage * 0.2})` }}>
+                   {ELEMENTS[active.element].emoji}
+                 </div>
+              </div>
+
+              {/* STATS GRID */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
+                <div style={{ background: "#0a0a0a", padding: "10px", border: "1px solid #222" }}>
+                  <div style={{ ...UI_STYLES.text, marginBottom: "5px" }}>VITALITY</div>
+                  <div style={{ fontSize: "18px", fontWeight: "bold" }}>{active.hp} <span style={{ fontSize: "10px", color: "#555" }}>/ {active.hp}</span></div>
+                </div>
+                <div style={{ background: "#0a0a0a", padding: "10px", border: "1px solid #222" }}>
+                  <div style={{ ...UI_STYLES.text, marginBottom: "5px" }}>POWER_INDEX</div>
+                  <div style={{ fontSize: "18px", fontWeight: "bold" }}>{active.atk} <span style={{ fontSize: "10px", color: "#44ff88" }}>▲</span></div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: "20px", ...UI_STYLES.text, lineHeight: "1.6", borderLeft: "2px solid #333", paddingLeft: "15px", fontStyle: "italic" }}>
+                "Subject shows significant cellular density in Stage {active.stage}. Data streams indicate high compatibility with current battle sub-routines. Monitor for bit-leakage during high-intensity operations."
+              </div>
+            </div>
+
+            {/* ACTION FOOTER */}
+            <div style={{ display: "flex", gap: "10px" }}>
+               <button style={{ flex: 1, background: "#44ff88", color: "#000", border: "none", padding: "12px", fontWeight: "bold", cursor: "pointer", fontFamily: "'Fira Code', monospace", fontSize: "12px" }}>DEPLOY_TO_SIM.EXE</button>
+               <button style={{ flex: 1, background: "transparent", border: "1px solid #333", color: "#eee", padding: "12px", cursor: "pointer", fontFamily: "'Fira Code', monospace", fontSize: "12px" }}>INJECT_ESSENCE.DLL</button>
+            </div>
+         </div>
+
+       </div>
+    </div>
+  );
+}

@@ -1,0 +1,61 @@
+import React, { useState, useEffect } from 'react';
+import { Dna, Terminal, Zap, RefreshCcw } from 'lucide-react';
+
+export default function Hatchery() {
+  const [felixMood, setFelixMood] = useState('default');
+  const [log, setLog] = useState("DRAGON_FORGE v1.0: System Online. Awaiting DNA sequence.");
+
+  // This would be your uploaded Felix image
+  const FELIX_ASSET = "Gemini_Generated_Image_ric0vkric0vkric0.jpg";
+
+  const triggerCompile = () => {
+    setFelixMood('success');
+    setLog("EUREKA! The recombinant strands are stabilizing. Witness the birth of data!");
+    // ... rest of compile logic
+  };
+
+  const UI_STYLES = {
+    panel: { background: "#111", border: "1px solid #333", padding: "12px", fontFamily: "'Fira Code', monospace" },
+    felixFrame: { 
+      width: "64px", height: "64px", 
+      border: "1px solid #44ff88", 
+      background: "#050505", 
+      overflow: "hidden",
+      imageRendering: "pixelated" 
+    }
+  };
+
+  return (
+    <div style={{ background: "#000", color: "#eee", padding: "20px" }}>
+      {/* FELIX TRANSMISSION OVERLAY */}
+      <div style={{ ...UI_STYLES.panel, display: "flex", gap: "15px", alignItems: "center", marginBottom: "20px", borderLeft: "4px solid #44ff88" }}>
+        <div style={UI_STYLES.felixFrame}>
+          <img 
+            src={FELIX_ASSET} 
+            alt="Professor Felix" 
+            style={{ 
+              width: "100%", height: "100%", objectFit: "cover",
+              filter: felixMood === 'success' ? 'brightness(1.2) sepia(0.5) hue-rotate(80deg)' : 'none' 
+            }} 
+          />
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: "10px", color: "#44ff88", marginBottom: "4px" }}>[PROF_FELIX_COMMS]</div>
+          <div style={{ fontSize: "12px", lineHeight: "1.4" }}>"{log}"</div>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+        <div style={UI_STYLES.panel}>
+            <h3 style={{ fontSize: "12px", marginBottom: "10px" }}>// SEQUENCE_EDITOR</h3>
+            <div style={{ height: "100px", border: "1px dashed #333", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Dna size={32} color="#333" />
+            </div>
+            <button onClick={triggerCompile} style={{ width: "100%", marginTop: "10px", background: "#44ff88", color: "#000", border: "none", padding: "8px", fontWeight: "bold", cursor: "pointer" }}>
+                COMPILE_DNA.EXE
+            </button>
+        </div>
+      </div>
+    </div>
+  );
+}

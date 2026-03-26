@@ -1,0 +1,125 @@
+import React, { useState, useEffect } from 'react';
+import { Sword, Zap, Shield, AlertTriangle, Terminal, Activity } from 'lucide-react';
+
+/**
+ * DRAGON FORGE: COMBAT INTERFACE
+ * Integrated with Cyber-Retro style and 1px border aesthetic.
+ */
+
+const ELEMENTS = {
+  fire: { name: "Fire", emoji: "🔥", color: "#ff4422", accent: "#ff8844", weakness: "ice" },
+  ice: { name: "Ice", emoji: "❄️", color: "#44bbff", accent: "#88ddff", weakness: "lightning" },
+  lightning: { name: "Lightning", emoji: "⚡", color: "#ffdd00", accent: "#ffee66", weakness: "nature" },
+  nature: { name: "Nature", emoji: "🌿", color: "#44dd66", accent: "#88ff99", weakness: "fire" },
+  shadow: { name: "Shadow", emoji: "🌑", color: "#9944ff", accent: "#bb88ff", weakness: "solar" }
+};
+
+export default function CombatEngine() {
+  const [phase, setPhase] = useState('BOOT'); // BOOT, READY, ACTION, END
+  const [logs, setLogs] = useState(["[SYSTEM] Initializing battle sub-routines..."]);
+  const [player, setPlayer] = useState({ name: "CINDER_X01", element: "fire", hp: 450, maxHp: 450, mp: 100, anim: 'idle' });
+  const [enemy, setEnemy] = useState({ name: "FROST_STATIC", element: "ice", hp: 400, maxHp: 400, mp: 80, anim: 'idle' });
+
+  const UI_STYLES = {
+    panel: { background: "#111", border: "1px solid #333", padding: "12px", position: "relative" },
+    text: { fontFamily: "'Fira Code', monospace", fontSize: "11px", color: "#888" },
+    heading: { fontWeight: "bold", fontSize: "12px", letterSpacing: "1px", color: "#eee", marginBottom: "8px", textTransform: "uppercase" },
+    btn: { background: "#151515", border: "1px solid #444", color: "#ccc", cursor: "pointer", transition: "0.1s", padding: "8px", fontSize: "10px", fontFamily: "'Fira Code', monospace" }
+  };
+
+  useEffect(() => {
+    if (phase === 'BOOT') setTimeout(() => setPhase('READY'), 1200);
+  }, [phase]);
+
+  const addLog = (msg) => setLogs(prev => [`> ${msg}`, ...prev].slice(0, 6));
+
+  const runTurn = async (type) => {
+    if (phase !== 'READY') return;
+    setPhase('ACTION');
+
+    // Player Phase
+    setPlayer(p => ({ ...p, anim: 'attack' }));
+    let dmg = 45 + Math.floor(Math.random() * 20);
+    if (ELEMENTS[player.element].weakness === enemy.element) dmg = Math.floor(dmg * 0.5);
+    
+    await new Promise(r => setTimeout(r, 600));
+    setEnemy(e => ({ ...e, hp: Math.max(0, e.hp - dmg), anim: 'hit' }));
+    addLog(`${player.name} executes ${type.toUpperCase()}. Impact: ${dmg} units.`);
+
+    if (enemy.hp - dmg <= 0) {
+      setPhase('END');
+      addLog("TARGET_DELETED: Extraction complete.");
+      return;
+    }
+
+    // Enemy Phase
+    await new Promise(r => setTimeout(r, 800));
+    setEnemy(e => ({ ...e, anim: 'attack', animState: 'idle' }));
+    setPlayer(p => ({ ...p, anim: 'idle' }));
+    
+    let eDmg = 30 + Math.floor(Math.random() * 15);
+    setPlayer(p => ({ ...p, hp: Math.max(0, p.hp - eDmg), anim: 'hit' }));
+    addLog(`Counter-pulse detected. Damage sustained: ${eDmg} units.`);
+
+    await new Promise(r => setTimeout(r, 600));
+    setPlayer(p => ({ ...p, anim: 'idle' }));
+    setEnemy(e => ({ ...e, anim: 'idle' }));
+    setPhase('READY');
+  };
+
+  return (
+    <div style={{ background: "#000", minHeight: "100vh", padding: "20px", color: "#eee" }}>
+      {/* SCANLINES */}
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%), linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,0,0.03))", backgroundSize: "100% 3px, 3px 100%", pointerEvents: "none", zIndex: 1000 }} />
+
+      <div style={{ maxWidth: "800px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "15px" }}>
+        
+        {/* ARENA */}
+        <div style={{ ...UI_STYLES.panel, height: "300px", display: "flex", justifyContent: "space-around", alignItems: "flex-end", background: "linear-gradient(to bottom, #050505, #111)" }}>
+          <div style={{ position: "absolute", top: 10, left: 10, ...UI_STYLES.text, color: "#44ff88" }}>[SIM_ACTIVE]</div>
+          
+          {/* Player Sprite Wrapper */}
+          <div style={{ transform: player.anim === 'attack' ? 'translateX(30px)' : 'none', transition: '0.3s' }}>
+            <div style={{ width: "80px", height: "80px", border: "1px solid #444", background: player.anim === 'hit' ? "#ff000033" : "#222", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px" }}>
+              {ELEMENTS[player.element].emoji}
+            </div>
+            <div style={{ height: "4px", background: "#222", marginTop: "8px", width: "100%" }}>
+              <div style={{ height: "100%", background: "#44ff88", width: `${(player.hp / player.maxHp) * 100}%` }} />
+            </div>
+          </div>
+
+          {/* Enemy Sprite Wrapper */}
+          <div style={{ transform: enemy.anim === 'attack' ? 'translateX(-30px)' : 'none', transition: '0.3s' }}>
+            <div style={{ width: "80px", height: "80px", border: "1px solid #444", background: enemy.anim === 'hit' ? "#ff000033" : "#222", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px" }}>
+              {ELEMENTS[enemy.element].emoji}
+            </div>
+            <div style={{ height: "4px", background: "#222", marginTop: "8px", width: "100%" }}>
+              <div style={{ height: "100%", background: "#ff4444", width: `${(enemy.hp / enemy.maxHp) * 100}%` }} />
+            </div>
+          </div>
+        </div>
+
+        {/* CONTROLS & LOGS */}
+        <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: "15px" }}>
+          <div style={UI_STYLES.panel}>
+            <div style={UI_STYLES.heading}>// COMMAND_INPUT</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+              <button onClick={() => runTurn('strike')} disabled={phase !== 'READY'} style={UI_STYLES.btn}>STRIKE.EXE</button>
+              <button onClick={() => runTurn('burst')} disabled={phase !== 'READY'} style={UI_STYLES.btn}>BURST.SH</button>
+              <button style={{ ...UI_STYLES.btn, opacity: 0.3 }}>REPAIR.DLL</button>
+              <button style={{ ...UI_STYLES.btn, opacity: 0.3 }}>EVOLVE.INIT</button>
+            </div>
+          </div>
+
+          <div style={{ ...UI_STYLES.panel, background: "#080808" }}>
+            <div style={{ ...UI_STYLES.heading, color: "#555" }}>BATTLE_FEED</div>
+            <div style={{ ...UI_STYLES.text, display: "flex", flexDirection: "column", gap: "4px" }}>
+              {logs.map((l, i) => <div key={i} style={{ color: i === 0 ? "#44ff88" : "#555" }}>{l}</div>)}
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}

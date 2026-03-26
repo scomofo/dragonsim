@@ -1,0 +1,17 @@
+{
+  "NULL_VOID_DRAGON": "image_gen(prompt='A high-resolution 128x128 pixel art dragon boss on a transparent background. The dragon is composed of raw white and black glitches, binary code fragments, and shifting static. It has no fixed shape, with digital artifacts trailing from its wings. 16-bit retro aesthetic.')",
+  "ARENA_NULL_VOID": "image_gen(prompt='A 512x256 pixel art battle background. A monochromatic void of pure black and white. Floating broken UI elements, health bars, and lines of green code serve as the ground plane. High-contrast glitch aesthetic.')",
+  "ARENA_MAGMA": "image_gen(prompt='A 512x256 pixel art battle background. A volcanic obsidian crag with flowing neon orange lava veins. Dark jagged rocks, rising heat haze, and falling embers. 16-bit retro RPG style.')",
+  "ARENA_STATIC": "image_gen(prompt='A 512x256 pixel art battle background. A storm-shattered mountain peak under a dark teal sky. Occasional bright blue lightning strikes illuminating floating metallic debris and high-voltage towers.')",
+  "ARENA_ICE": "image_gen(prompt='A 512x256 pixel art battle background. A frozen crystalline cavern with glowing cyan ice formations. Sharp geometric icicles and a light dusting of digital snow particles.')",
+  "ARENA_VENOM": "image_gen(prompt='A 512x256 pixel art battle background. A bubbling acid swamp with toxic purple mist. Gnarled black trees and glowing green chemical pools under a murky sky.')",
+  "ARENA_STONE": "image_gen(prompt='A 512x256 pixel art battle background. A dusty sandstone canyon with massive carved monoliths. Wind-blown sand sprites and sharp vertical rock faces.')",
+  "ARENA_SHADOW": "image_gen(prompt='A 512x256 pixel art battle background. A dark obsidian fortress interior with flickering indigo torches. Encrypted runes etched into the floor and heavy stone pillars.')",
+  "ARENA_SOLAR": "image_gen(prompt='A 512x256 pixel art battle background. A radiant celestial platform floating above a sea of golden clouds. Intense white-yellow lens flares and orbiting light-spheres.')",
+  "EFFECT_MAGMA_EMBER": "image_gen(prompt='A sprite sheet of small pixel art fire embers and flame bursts on a transparent background. Vibrant red and orange hues with a slight glow.')",
+  "EFFECT_STATIC_SPARK": "image_gen(prompt='A sprite sheet of blue and white electric sparks and jagged lightning bolts on a transparent background. 16-bit arcade style.')",
+  "EFFECT_ICE_SHARD": "image_gen(prompt='A sprite sheet of sharp geometric ice crystals and frost clouds on a transparent background. Pale blue and white colors.')",
+  "EFFECT_VENOM_DROPLET": "image_gen(prompt='A sprite sheet of dripping green acid and purple toxic bubbles on a transparent background. Slime textures.')",
+  "EFFECT_SHADOW_SMOKE": "image_gen(prompt='A sprite sheet of swirling dark purple and black smoke tendrils with glowing eyes on a transparent background.')",
+  "PROFESSOR_FELIX_PORTRAIT": "image_gen(prompt='A 48x48 pixel art portrait of an eccentric old scientist with messy white hair, goggles, and a high-collar lab coat. Transparent background. Expressive and slightly mad but benevolent.')"
+}

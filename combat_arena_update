@@ -1,0 +1,81 @@
+import React, { useState } from 'react';
+
+/**
+ * UPDATED COMBAT VIEW
+ * Integrates the specific high-contrast arena assets provided.
+ */
+export default function CombatArena({ enemyElement }) {
+  // Mapping the user-provided arena style to elements
+  const ARENA_ASSET = "Gemini_Generated_Image_nuu7q0nuu7q0nuu7.jpg";
+
+  const UI_STYLES = {
+    arenaContainer: {
+      width: "100%",
+      height: "350px",
+      background: "#000",
+      border: "1px solid #333",
+      position: "relative",
+      overflow: "hidden",
+      display: "flex",
+      alignItems: "flex-end",
+      justifyContent: "space-around",
+      paddingBottom: "60px" // Anchoring sprites to the ground plane
+    },
+    backgroundLayer: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      backgroundImage: `url(${ARENA_ASSET})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      filter: "brightness(0.6) contrast(1.2)", // Enhancing the "Cyber" look
+      zIndex: 1
+    },
+    // Lighting glow based on the arena's elemental energy
+    elementalGlow: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      width: "100%",
+      height: "50%",
+      background: `linear-gradient(to top, ${getElementColor(enemyElement)}22, transparent)`,
+      zIndex: 2,
+      pointerEvents: "none"
+    }
+  };
+
+  return (
+    <div style={UI_STYLES.arenaContainer}>
+      <div style={UI_STYLES.backgroundLayer} />
+      <div style={UI_STYLES.elementalGlow} />
+      
+      {/* Dynamic Scanlines (from main simulator style) */}
+      <div className="scanlines" style={{ zIndex: 10 }} />
+
+      {/* Dragon Sprites (Now correctly anchored to the ground plane in the image) */}
+      <div style={{ zIndex: 5, position: "relative", transform: "translateY(-10px)" }}>
+        <PlaceholderDragon label="PLAYER" color="#44ff88" />
+      </div>
+      
+      <div style={{ zIndex: 5, position: "relative", transform: "translateY(-10px)" }}>
+        <PlaceholderDragon label="ENEMY" color="#ff4422" />
+      </div>
+    </div>
+  );
+}
+
+function getElementColor(el) {
+    const colors = { fire: "#ff4422", ice: "#44bbff", lightning: "#ffdd00", null: "#ffffff" };
+    return colors[el] || "#44ff88";
+}
+
+function PlaceholderDragon({ label, color }) {
+    return (
+        <div style={{ textAlign: "center" }}>
+            <div style={{ width: "80px", height: "80px", border: `1px solid ${color}`, background: `${color}11` }} />
+            <div style={{ fontSize: "10px", marginTop: "5px", fontFamily: "monospace" }}>[{label}]</div>
+        </div>
+    );
+}

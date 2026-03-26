@@ -6,262 +6,22 @@ import { useState, useEffect, useRef, useCallback } from "react";
 // Cyber-Retro Aesthetic · Arena Image Backgrounds · Professor Felix
 // ═══════════════════════════════════════════════════════════════
 
-// ─── XBOX / USB GAMEPAD SUPPORT ───
-// Standard Gamepad API mapping (Xbox One / Xbox Series controllers):
-//   Button 0 = A      Button 1 = B      Button 2 = X      Button 3 = Y
-//   Button 4 = LB     Button 5 = RB     Button 6 = LT     Button 7 = RT
-//   Button 8 = Back   Button 9 = Start  Button 12 = DPad Up
-//   Button 13 = DPad Down  Button 14 = DPad Left  Button 15 = DPad Right
-//   Axes 0/1 = Left Stick  Axes 2/3 = Right Stick
-const GP = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, BACK: 8, START: 9,
-             UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
-
-function useGamepad(callback) {
-  const cbRef = useRef(callback);
-  cbRef.current = callback;
-  const prevRef = useRef({});
-
-  useEffect(() => {
-    let raf;
-    const poll = () => {
-      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-      for (const gp of gamepads) {
-        if (!gp) continue;
-        const prev = prevRef.current[gp.index] || {};
-        const pressed = {};
-        // Detect button presses (rising edge only — not held)
-        for (let i = 0; i < gp.buttons.length; i++) {
-          const btn = gp.buttons[i];
-          const isDown = typeof btn === "object" ? btn.pressed : btn > 0.5;
-          if (isDown && !prev[i]) pressed[i] = true;
-        }
-        // Left stick as d-pad (with deadzone)
-        const lx = gp.axes[0] || 0, ly = gp.axes[1] || 0;
-        const plx = prev.lx || 0, ply = prev.ly || 0;
-        if (lx < -0.5 && plx >= -0.5) pressed[GP.LEFT] = true;
-        if (lx > 0.5 && plx <= 0.5) pressed[GP.RIGHT] = true;
-        if (ly < -0.5 && ply >= -0.5) pressed[GP.UP] = true;
-        if (ly > 0.5 && ply <= 0.5) pressed[GP.DOWN] = true;
-
-        // Store current state
-        const state = {};
-        for (let i = 0; i < gp.buttons.length; i++) {
-          const btn = gp.buttons[i];
-          state[i] = typeof btn === "object" ? btn.pressed : btn > 0.5;
-        }
-        state.lx = lx; state.ly = ly;
-        prevRef.current[gp.index] = state;
-
-        // Fire callback for any pressed buttons
-        const keys = Object.keys(pressed);
-        if (keys.length > 0) cbRef.current(keys.map(Number));
-      }
-      raf = requestAnimationFrame(poll);
-    };
-    raf = requestAnimationFrame(poll);
-    return () => cancelAnimationFrame(raf);
-  }, []);
-}
-
-const rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
-const pick = (arr) => arr[rand(0, arr.length - 1)];
-
-// ─── AUDIO ENGINE ───
-// Drop .wav files into /public/audio/ matching these names and they auto-play.
-// No files = no errors, just silence.
-const SFX = {
-  // System
-  boot:          "/audio/sys_boot_resonant.wav",
-  textBlip:      "/audio/sys_text_blip.wav",
-  confirm:       "/audio/ui_select_ping.wav",
-  error:         "/audio/ui_denied_buzz.wav",
-  // Hatchery
-  hatchStart:    "/audio/hatch_molecular_hum.wav",
-  hatchSuccess:  "/audio/hatch_complete_chime.wav",
-  shinyAlert:    "/audio/hatch_shiny_sting.wav",
-  // Evolution
-  evolve:        "/audio/forge_energy_surge.wav",
-  ultraShiny:    "/audio/forge_quantum_break.wav",
-  // Combat attacks
-  atkFire:       "/audio/atk_fire_slash.wav",
-  atkLightning:  "/audio/atk_static_discharge.wav",
-  atkIce:        "/audio/atk_glacier_crack.wav",
-  atkGeneric:    "/audio/atk_fire_slash.wav",
-  critHit:       "/audio/hit_crit_thud.wav",
-  npcDeath:      "/audio/mob_decompile.wav",
-  // Boss
-  bossRoar:      "/audio/boss_void_glitch.wav",
-  bossPulse:     "/audio/boss_low_heartbeat.wav",
-};
-
-// Element-to-attack-sound mapping
-const ATK_SFX = {
-  fire: SFX.atkFire, ice: SFX.atkIce, lightning: SFX.atkLightning,
-  nature: SFX.atkGeneric, shadow: SFX.atkGeneric, stone: SFX.atkGeneric,
-};
-
-const _audioCache = {};
-function playSound(key, opts = {}) {
-  const url = typeof key === "string" && key.startsWith("/") ? key : SFX[key];
-  if (!url) return;
-  try {
-    // Cache Audio objects for reuse
-    if (!_audioCache[url]) {
-      const audio = new Audio(url);
-      audio.preload = "auto";
-      _audioCache[url] = audio;
-    }
-    const audio = _audioCache[url].cloneNode();
-    audio.volume = opts.volume ?? 0.5;
-    // Pitch randomization for blips (±5%)
-    if (opts.pitchShift) {
-      audio.playbackRate = 0.95 + Math.random() * 0.1;
-    }
-    audio.play().catch(() => {}); // silently fail if no file or autoplay blocked
-  } catch (e) { /* no audio file = no sound, no error */ }
-}
-
-// ─── ELEMENTAL MATRIX (Master Specs) ───
-// 6 core elements with strengths/weaknesses per spec + void endgame
-const ELEMENTS = {
-  fire:      { name: "Magma",   emoji: "\u{1F525}", color: "#ff4422", accent: "#ff8844", bg: "#331108", weakness: "ice",       strong: ["nature", "stone"],         arena: "/arenas/fire.png",
-    lore: "Scorchers of the Depths. Born from cracked lava, they serve as the Forge's thermal reactors. Their sustained magma breath regulates the simulation's core temperature.",
-    role: "Thermal Reactor" },
-  ice:       { name: "Ice",     emoji: "\u2744\uFE0F",  color: "#44bbff", accent: "#88ddff", bg: "#081828", weakness: "fire",      strong: ["venom", "lightning"],    arena: "/arenas/ice.png",
-    lore: "Hunters of the Frost. Guardians of the Forge's cold-storage archives. Their cryo-breath stabilizes critical sectors during high-stress simulation events.",
-    role: "Cryo-Stabilizer" },
-  lightning: { name: "Static",  emoji: "\u26A1",    color: "#ffdd00", accent: "#ffee66", bg: "#282008", weakness: "stone",     strong: ["fire", "venom"],         arena: "/arenas/storm.png",
-    lore: "Masters of Energy. The electrical conduits of the Forge, channeling power between Solar sources and Magma reactors. Fast, unpredictable, and devastating.",
-    role: "Energy Conduit" },
-  nature:    { name: "Venom",   emoji: "\u{1F40D}", color: "#76ff03", accent: "#88ff99", bg: "#082810", weakness: "lightning", strong: ["shadow", "stone"],   arena: "/arenas/venom.png",
-    lore: "The Corrosive Ones. They emerged from the swamps of corrupted data, dissolving unstable code with their acid. Patient predators who outlast their prey.",
-    role: "Code Purifier" },
-  shadow:    { name: "Shadow",  emoji: "\u{1F311}", color: "#9944ff", accent: "#bb88ff", bg: "#180828", weakness: "nature",    strong: ["lightning", "stone"],     arena: "/arenas/shadow.png",
-    lore: "Keepers of the Void. Shadow stalkers that inhabit the spaces between processed data. They move through the simulation's blind spots, unseen until they strike.",
-    role: "Void Walker" },
-  stone:     { name: "Stone",   emoji: "\u{1FAA8}", color: "#a1887f", accent: "#bcaaa4", bg: "#1a1008", weakness: "fire",      strong: ["lightning", "ice"],       arena: "/arenas/stone.png",
-    lore: "The Unyielding Foundation. Carved from the bedrock of the Forge's architecture, they anchor reality itself. What they lack in speed, they repay in endurance.",
-    role: "Foundation Anchor" },
-};
-
-// Void element for endgame
-const VOID_ELEMENT = { name: "Void", emoji: "\u{1F47E}", color: "#ffffff", accent: "#cccccc", bg: "#000000", arena: "/arenas/shadow.png" };
-const BONUS_ARENAS = ["/arenas/quantum_forge.png", "/arenas/asteroid_field.png", "/arenas/gravity_chamber.png"];
-
-// ─── BODY TYPES ───
-const BODY_TYPES = [
-  { id: "serpent",  name: "Serpentine", desc: "+Speed",        statMod: { speed: 3 } },
-  { id: "tank",     name: "Hulking",    desc: "+Defense, +HP", statMod: { defense: 3, maxHp: 20 } },
-  { id: "balanced", name: "Balanced",   desc: "All-round",    statMod: {} },
-  { id: "wyvern",   name: "Wyvern",     desc: "+Attack",      statMod: { attack: 3 } },
-  { id: "mystic",   name: "Mystic",     desc: "+Mana",        statMod: { maxMana: 20 } },
-];
-
-// ─── TITLES ───
-const TITLES = ["", "the Fierce", "the Mighty", "Dragonborn", "Flamecaller", "Stormbringer", "the Ancient", "Worldeater", "the Unyielding", "Shadowbane", "Skyscourge"];
-
-// ─── ABILITIES ───
-const ABILITIES = {
-  fire: [
-    { name: "Magma Bolt", dmg: 18, cost: 15, type: "attack", icon: "\u{1F525}", fx: "fire", desc: "Hurl a blazing fireball" },
-    { name: "Inferno", dmg: 30, cost: 28, type: "attack", icon: "\u{1F30B}", fx: "fire", desc: "Unleash a firestorm" },
-    { name: "Flame Shield", dmg: 0, cost: 12, type: "buff", value: 3, stat: "defense", icon: "\u{1F6E1}\uFE0F", fx: "buff", desc: "+3 DEF this fight" },
-    { name: "Searing Drain", dmg: 14, cost: 18, type: "drain", healPct: 0.4, icon: "\u{1F480}", fx: "fire", desc: "Drain life from foe" },
-  ],
-  ice: [
-    { name: "Frost Bolt", dmg: 16, cost: 13, type: "attack", icon: "\u2744\uFE0F", fx: "ice", desc: "Launch a bolt of ice" },
-    { name: "Blizzard", dmg: 28, cost: 26, type: "attack", icon: "\u{1F328}\uFE0F", fx: "ice", desc: "Summon a blizzard" },
-    { name: "Ice Armor", dmg: 0, cost: 14, type: "buff", value: 4, stat: "defense", icon: "\u{1F9CA}", fx: "buff", desc: "+4 DEF this fight" },
-    { name: "Glacial Heal", dmg: 0, cost: 20, type: "heal", value: 25, icon: "\u{1F48E}", fx: "heal", desc: "Restore 25 HP" },
-  ],
-  lightning: [
-    { name: "Static Spark", dmg: 14, cost: 10, type: "attack", icon: "\u26A1", fx: "lightning", desc: "Quick lightning strike" },
-    { name: "Thunder Crash", dmg: 32, cost: 30, type: "attack", icon: "\u{1F329}\uFE0F", fx: "lightning", desc: "Devastating thunder" },
-    { name: "Static Charge", dmg: 0, cost: 12, type: "buff", value: 3, stat: "attack", icon: "\u{1F4AB}", fx: "buff", desc: "+3 ATK this fight" },
-    { name: "Chain Lightning", dmg: 20, cost: 22, type: "attack", icon: "\u{1F517}", fx: "lightning", desc: "Chaining shock" },
-  ],
-  nature: [
-    { name: "Venom Spit", dmg: 15, cost: 12, type: "attack", icon: "\u{1F40D}", fx: "nature", desc: "Spit corrosive venom" },
-    { name: "Toxic Quake", dmg: 26, cost: 25, type: "attack", icon: "\u{1F30D}", fx: "nature", desc: "Shake the ground" },
-    { name: "Regenerate", dmg: 0, cost: 18, type: "heal", value: 30, icon: "\u{1F331}", fx: "heal", desc: "Restore 30 HP" },
-    { name: "Thorn Armor", dmg: 0, cost: 14, type: "buff", value: 4, stat: "defense", icon: "\u{1F335}", fx: "buff", desc: "+4 DEF this fight" },
-  ],
-  shadow: [
-    { name: "Shadow Bolt", dmg: 17, cost: 14, type: "attack", icon: "\u{1F311}", fx: "shadow", desc: "Dark energy blast" },
-    { name: "Void Rend", dmg: 34, cost: 32, type: "attack", icon: "\u{1F573}\uFE0F", fx: "shadow", desc: "Tear through reality" },
-    { name: "Dark Pact", dmg: 0, cost: 10, type: "buff", value: 4, stat: "attack", icon: "\u{1F4FF}", fx: "buff", desc: "+4 ATK this fight" },
-    { name: "Soul Siphon", dmg: 16, cost: 20, type: "drain", healPct: 0.5, icon: "\u{1F441}\uFE0F", fx: "shadow", desc: "Steal life force" },
-  ],
-  stone: [
-    { name: "Rock Hurl", dmg: 16, cost: 13, type: "attack", icon: "\u{1FAA8}", fx: "stone", desc: "Launch a boulder" },
-    { name: "Avalanche", dmg: 29, cost: 27, type: "attack", icon: "\u{1F3D4}\uFE0F", fx: "stone", desc: "Crush with rocks" },
-    { name: "Stone Skin", dmg: 0, cost: 12, type: "buff", value: 5, stat: "defense", icon: "\u{1F6E1}\uFE0F", fx: "buff", desc: "+5 DEF this fight" },
-    { name: "Earth Mend", dmg: 0, cost: 18, type: "heal", value: 28, icon: "\u{1F33F}", fx: "heal", desc: "Restore 28 HP" },
-  ],
-};
-
-// ─── SHOP ITEMS ───
-const SHOP_ITEMS = [
-  { name: "Iron Claws",      cost: 50,  stat: "attack",  value: 2,  icon: "\u{1F5E1}\uFE0F", desc: "+2 ATK", req: 1 },
-  { name: "Razorfang",       cost: 120, stat: "attack",  value: 4,  icon: "\u2694\uFE0F",     desc: "+4 ATK", req: 5 },
-  { name: "Scale Mail",      cost: 60,  stat: "defense", value: 2,  icon: "\u{1F6E1}\uFE0F",  desc: "+2 DEF", req: 1 },
-  { name: "Obsidian Plate",  cost: 150, stat: "defense", value: 5,  icon: "\u{1FAA8}",        desc: "+5 DEF", req: 7 },
-  { name: "Swift Boots",     cost: 70,  stat: "speed",   value: 3,  icon: "\u{1F462}",        desc: "+3 SPD", req: 3 },
-  { name: "Amulet of Life",  cost: 100, stat: "maxHp",   value: 20, icon: "\u{1F49A}",        desc: "+20 HP", req: 4 },
-  { name: "Mana Crystal",    cost: 90,  stat: "maxMana", value: 15, icon: "\u{1F48E}",        desc: "+15 MP", req: 3 },
-  { name: "Crown of Elements", cost: 200, stat: "attack", value: 6, icon: "\u{1F451}",        desc: "+6 ATK", req: 10 },
-  { name: "Dragon Heart",    cost: 250, stat: "maxHp",   value: 40, icon: "\u2764\uFE0F\u200D\u{1F525}", desc: "+40 HP", req: 12 },
-  { name: "Arcane Orb",      cost: 180, stat: "maxMana", value: 25, icon: "\u{1F52E}",        desc: "+25 MP", req: 8 },
-];
-
-// ─── TECHNIQUES ───
-const TECHNIQUES = [
-  { name: "Tail Cleave",   dmg: 22, cost: 16, type: "attack", icon: "\u{1F98E}", fx: "fire",    desc: "Sweep with tail",    req: 3,  price: 80 },
-  { name: "Frenzy",        dmg: 10, cost: 22, type: "multi", hits: 3, icon: "\u{1F4A2}", fx: "fire", desc: "3-hit combo",   req: 6,  price: 150 },
-  { name: "Venom Bite",    dmg: 12, cost: 15, type: "poison", dot: 5, turns: 3, icon: "\u{1F40D}", fx: "nature", desc: "Poison for 3 turns", req: 4, price: 100 },
-  { name: "Battle Roar",   dmg: 0,  cost: 18, type: "roar", atkVal: 3, defVal: 2, icon: "\u{1F981}", fx: "buff", desc: "+3 ATK +2 DEF", req: 5, price: 120 },
-  { name: "Life Steal",    dmg: 20, cost: 22, type: "drain", healPct: 0.5, icon: "\u{1F9DB}", fx: "shadow", desc: "Steal 50% as HP", req: 7, price: 160 },
-  { name: "Dragon Breath", dmg: 35, cost: 35, type: "attack", icon: "\u{1F409}", fx: "fire",    desc: "Devastating breath", req: 9,  price: 200 },
-  { name: "Iron Scales",   dmg: 0,  cost: 15, type: "buff", value: 6, stat: "defense", icon: "\u{1FAA8}", fx: "buff", desc: "+6 DEF this fight", req: 8, price: 140 },
-  { name: "War Cry",       dmg: 0,  cost: 12, type: "buff", value: 5, stat: "attack", icon: "\u{1F4EF}", fx: "buff", desc: "+5 ATK this fight", req: 6, price: 130 },
-  { name: "Meteor Strike",  dmg: 45, cost: 45, type: "attack", icon: "\u2604\uFE0F", fx: "fire", desc: "Call down a meteor", req: 14, price: 350 },
-  { name: "Healing Surge",  dmg: 0,  cost: 25, type: "heal", value: 40, icon: "\u2728", fx: "heal", desc: "Restore 40 HP",   req: 10, price: 220 },
-];
-
-// ─── BOSSES ───
-const BOSSES = [
-  { name: "Infernax the World Burner", element: "fire",      level: 5,  hp: 200, atk: 14, def: 8,  spd: 10, mana: 100, sig: { name: "World Fire",     dmg: 40, cost: 30, type: "attack", icon: "\u{1F30B}",        fx: "fire" },      gold: 150, xp: 80 },
-  { name: "Glaciara the Frozen Queen", element: "ice",       level: 8,  hp: 280, atk: 16, def: 12, spd: 9,  mana: 120, sig: { name: "Absolute Zero",   dmg: 50, cost: 35, type: "attack", icon: "\u{1F9CA}",        fx: "ice" },       gold: 250, xp: 140 },
-  { name: "Voltharion the Storm King", element: "lightning",  level: 12, hp: 350, atk: 20, def: 10, spd: 18, mana: 140, sig: { name: "Judgement Bolt",   dmg: 60, cost: 40, type: "attack", icon: "\u26A1",            fx: "lightning" }, gold: 400, xp: 220 },
-  { name: "Yggdraxis the Ancient Root", element: "nature",   level: 16, hp: 450, atk: 18, def: 22, spd: 7,  mana: 160, sig: { name: "Nature's Wrath",   dmg: 55, cost: 35, type: "attack", icon: "\u{1F30D}",        fx: "nature" },    gold: 550, xp: 320 },
-  { name: "Nihiloth the Void Dragon",  element: "shadow",    level: 20, hp: 600, atk: 25, def: 18, spd: 15, mana: 200, sig: { name: "Void Collapse",    dmg: 75, cost: 50, type: "attack", icon: "\u{1F573}\uFE0F", fx: "shadow" },    gold: 800, xp: 500 },
-];
-
-// ─── WORLD BOSS ───
-const WORLD_BOSS = { name: "THE_SINGULARITY", maxHp: 50000 };
-
-// ─── EVOLUTION STAGES ───
-const EVOLUTIONS = [
-  { stage: "Hatchling", level: 1,  desc: "A young dragon",       bonus: { attack: 0,  defense: 0,  speed: 0, maxHp: 0,   maxMana: 0 } },
-  { stage: "Juvenile",  level: 5,  desc: "Growing stronger",     bonus: { attack: 3,  defense: 2,  speed: 2, maxHp: 20,  maxMana: 15 } },
-  { stage: "Adult",     level: 10, desc: "A formidable beast",   bonus: { attack: 5,  defense: 4,  speed: 3, maxHp: 40,  maxMana: 25 } },
-  { stage: "Elder",     level: 15, desc: "Ancient and powerful",  bonus: { attack: 8,  defense: 6,  speed: 5, maxHp: 60,  maxMana: 40 } },
-  { stage: "Mythic",    level: 20, desc: "Legendary dragon",      bonus: { attack: 12, defense: 10, speed: 8, maxHp: 100, maxMana: 60 } },
-];
-
-// ─── ENEMY NAMES ───
-const ENEMY_NAMES = ["Drakon", "Wyrmtail", "Scalefang", "Emberclaw", "Frostmaw", "Thunderwing", "Thornback", "Nightshade", "Ashfury", "Glacius", "Stormcrest", "Venomtooth"];
-
-// ─── WEATHER SYSTEM (SNES-Style) ───
-const WEATHER_TYPES = {
-  clear:       { name: "Clear",        emoji: "\u2600\uFE0F", desc: "Normal conditions", buffs: {}, debuffs: {} },
-  thunderstorm:{ name: "Thunderstorm", emoji: "\u26C8\uFE0F", desc: "Lightning cracks the sky", buffs: { lightning: 1.25, ice: 1.15 }, debuffs: { fire: 0.8 } },
-  downpour:    { name: "Downpour",     emoji: "\u{1F327}\uFE0F", desc: "Torrential rain floods the arena", buffs: { ice: 1.3, nature: 1.15 }, debuffs: { fire: 0.7, lightning: 0.85 } },
-  heatwave:    { name: "Heat Wave",    emoji: "\u{1F525}", desc: "Scorching temperatures", buffs: { fire: 1.3, stone: 1.1 }, debuffs: { ice: 0.7, nature: 0.85 } },
-  voidstorm:   { name: "Void Storm",   emoji: "\u{1F30C}", desc: "Reality destabilizes", buffs: { shadow: 1.3 }, debuffs: { stone: 0.8, nature: 0.8 } },
-  sandstorm:   { name: "Sandstorm",    emoji: "\u{1F32A}\uFE0F", desc: "Blinding winds carry stone shards", buffs: { stone: 1.3, fire: 1.1 }, debuffs: { lightning: 0.8, shadow: 0.85 } },
-};
-const WEATHER_KEYS = Object.keys(WEATHER_TYPES).filter(k => k !== "clear");
+// ─── Extracted modules ───
+import { SFX, ATK_SFX } from "./data/sfx.js";
+import { ELEMENTS, VOID_ELEMENT, BONUS_ARENAS } from "./data/elements.js";
+import { ABILITIES, TECHNIQUES } from "./data/abilities.js";
+import { BODY_TYPES, ENEMY_NAMES, CORRUPTED_NPCS, BOSSES, WORLD_BOSS, EVOLUTIONS, TITLES } from "./data/creatures.js";
+import { SHOP_ITEMS } from "./data/shop.js";
+import { WEATHER_TYPES, WEATHER_KEYS } from "./data/weather.js";
+import { FELIX_MSGS, FELIX_BATTLE_QUIPS } from "./data/felix.js";
+import { INTRO_LINES } from "./data/intro.js";
+import { rand, pick } from "./utils/helpers.js";
+import { UI } from "./utils/ui.js";
+import { playSound } from "./engine/audio.js";
+import { SPRITE_SHEETS, ATTACK_SPRITE_SHEETS, SPRITE_COLS, SPRITE_ROWS, SPRITE_FRAMES, ATTACK_FRAME_COUNT, FRAME_W, FRAME_H, getSpriteFrames, loadSpriteSheet, loadAttackSheet } from "./engine/sprites.js";
+import { GP, useGamepad } from "./hooks/useGamepad.js";
+import { generateEnemy, generateBoss } from "./engine/combat.js";
+import { getEvolution } from "./engine/evolution.js";
 
 function WeatherOverlay({ weather, lightning }) {
   if (weather === "clear") return null;
@@ -326,68 +86,6 @@ function WeatherOverlay({ weather, lightning }) {
   );
 }
 
-// ─── CORRUPTED BESTIARY (Singularity NPCs) ───
-const CORRUPTED_NPCS = [
-  { name: "Bit-Wraith",         element: "shadow",    emoji: "\u{1F47B}", level: 3,  hp: 80,  atk: 12, def: 4,  spd: 16, mana: 80,
-    sig: { name: "Data Leak",   dmg: 15, cost: 10, type: "poison", turns: 3, icon: "\u{1F4BE}", fx: "shadow" }, gold: 40, xp: 25,
-    sprite: "/sprites/npc/bit_wraith_sprites.png", filter: "hue-rotate(120deg) contrast(1.4) brightness(0.8)", desc: "Uninstalls your data" },
-  { name: "Recursive Golem",    element: "stone",     emoji: "\u{1F9F1}", level: 6,  hp: 180, atk: 10, def: 20, spd: 4,  mana: 60,
-    sig: { name: "Stack Overflow", dmg: 25, cost: 15, type: "attack", icon: "\u{1F4A5}", fx: "stone" }, gold: 80, xp: 50,
-    sprite: "/sprites/npc/recursive_golem_sprites.png", filter: "hue-rotate(200deg) contrast(1.3)", desc: "Splits when destroyed" },
-  { name: "Thermal Overloader",  element: "fire",      emoji: "\u{1F441}\uFE0F", level: 8,  hp: 150, atk: 22, def: 6,  spd: 8,  mana: 100,
-    sig: { name: "System Purge", dmg: 45, cost: 25, type: "attack", icon: "\u{1F525}", fx: "fire" }, gold: 120, xp: 70,
-    sprite: "/sprites/npc/thermal_overloader_sprites.png", filter: "hue-rotate(30deg) contrast(1.5) saturate(1.5)", desc: "Overheats and explodes" },
-  { name: "Logic Bomb",         element: "lightning",  emoji: "\u{1F4A3}", level: 10, hp: 120, atk: 0,  def: 15, spd: 1,  mana: 50,
-    sig: { name: "Countdown",   dmg: 0,  cost: 0,  type: "buff", value: 5, icon: "\u23F0", fx: "lightning" }, gold: 200, xp: 100,
-    sprite: "/sprites/npc/logic_bomb_sprites.png", filter: "hue-rotate(60deg) contrast(1.6) brightness(1.2)", desc: "5 turns or it detonates" },
-  { name: "Glitch-Hydra",       element: "nature",    emoji: "\u{1F40D}", level: 12, hp: 250, atk: 16, def: 10, spd: 12, mana: 120,
-    sig: { name: "Triple Fault", dmg: 18, cost: 20, type: "multi", hits: 3, icon: "\u{1F40D}", fx: "nature" }, gold: 180, xp: 110,
-    sprite: "/sprites/npc/glitch_hydra_sprites.png", filter: "hue-rotate(90deg) contrast(1.4) saturate(2)", desc: "Three heads, three errors" },
-  { name: "Crypto-Crab",        element: "ice",       emoji: "\u{1F980}", level: 14, hp: 300, atk: 14, def: 25, spd: 5,  mana: 80,
-    sig: { name: "Brute Force",  dmg: 35, cost: 20, type: "attack", icon: "\u{1F510}", fx: "ice" }, gold: 220, xp: 130,
-    sprite: "/sprites/npc/crypto_crab_sprites.png", filter: "hue-rotate(180deg) contrast(1.3) brightness(0.9)", desc: "256-bit encrypted shell" },
-  { name: "Protocol Vulture",   element: "shadow",    emoji: "\u{1F985}", level: 16, hp: 200, atk: 20, def: 8,  spd: 20, mana: 100,
-    sig: { name: "Downgrade Strike", dmg: 30, cost: 15, type: "attack", icon: "\u2B07\uFE0F", fx: "shadow" }, gold: 260, xp: 150,
-    sprite: "/sprites/npc/protocol_vulture_sprites.png", filter: "hue-rotate(270deg) contrast(1.5)", desc: "Feeds on experience" },
-  { name: "Phishing Siren",     element: "nature",    emoji: "\u{1F9DC}", level: 18, hp: 220, atk: 18, def: 10, spd: 22, mana: 140,
-    sig: { name: "Confusion.exe", dmg: 20, cost: 20, type: "poison", turns: 3, icon: "\u{1F48E}", fx: "nature" }, gold: 300, xp: 180,
-    sprite: "/sprites/npc/phishing_siren_sprites.png", filter: "hue-rotate(330deg) contrast(1.2) saturate(1.8)", desc: "Beauty masks a virus" },
-  { name: "Buffer Overflow",    element: "fire",      emoji: "\u{1F30B}", level: 20, hp: 400, atk: 12, def: 6,  spd: 8,  mana: 200,
-    sig: { name: "Memory Flood", dmg: 50, cost: 30, type: "attack", icon: "\u{1F4A7}", fx: "fire" }, gold: 400, xp: 250,
-    sprite: "/sprites/npc/buffer_overflow_sprites.png", filter: "hue-rotate(10deg) contrast(2) saturate(2) brightness(1.3)", desc: "Grows every turn" },
-  { name: "Firewall Sentinel",  element: "lightning",  emoji: "\u{1F6E1}\uFE0F", level: 22, hp: 500, atk: 22, def: 30, spd: 10, mana: 160,
-    sig: { name: "Hard-Coded Defense", dmg: 40, cost: 25, type: "attack", icon: "\u{1F6AB}", fx: "lightning" }, gold: 500, xp: 350,
-    sprite: "/sprites/npc/firewall_sentinel_sprites.png", filter: "hue-rotate(45deg) contrast(1.8) brightness(1.1)", desc: "The final gatekeeper" },
-];
-
-// ─── FELIX MESSAGES ───
-const FELIX_MSGS = {
-  hatchery: "Slot the carrier into the analysis port and try not to ignite the atmosphere. We're converting raw data into elemental cores — your dragons are the Forge's immune system.",
-  compiling: "CRITICAL: Synthesizing recombinant DNA strands. Do NOT power off! The resonance limit is a suggestion, not a target — but we're pushing it anyway.",
-  successPure: "Pure-blood strain compiled. Optimal data-structure achieved. This one carries the original code of the Primordial Forge. Handle with reverence... or recklessness. Your choice.",
-  successHybrid: "Hybridization complete! Minor instability detected, but the code is holding. Cross-elemental splicing was forbidden for a reason — let's find out why.",
-  combat: "Simulation parameters locked. The corruption has turned peaceful Lumiri into techno-organic abominations. Show no mercy — they're already dead code.",
-  victory: "Target deleted. Salvaging data-fragments... Every corrupted process you purge brings the Forge one cycle closer to restoration. Don't let it go to your head.",
-  defeat: "Subject integrity compromised! I told you the resonance limit was dangerous. Get to the repair bay before your dragon's code degrades to junk data.",
-  journal: "Accessing the specimen compendium. Every dragon you've catalogued is a living proof of the evolution of digital complexity. Impressive... for an amateur.",
-  boss: "The Abomination has sent its Architect. This isn't a routine purge — this is the endgame. Deploy everything. I'll be monitoring from my basement. For God's sake, don't die.",
-  nullVoid: "Null Void detected — reality itself is unraveling. The columns of darkness are consuming this sector. We need to restore the core before there's nothing left to save.",
-};
-
-// Contextual Felix battle quips — randomly shown during combat
-const FELIX_BATTLE_QUIPS = [
-  "Stop playing with your food and finish it!",
-  "I didn't boost the spectrometer to 105% for you to lose to a corrupted subroutine.",
-  "Use your elemental advantage! Did they not teach you basic thermodynamics?",
-  "That creature used to be a peaceful data-stream. Now look at it. The Abomination's cruelty knows no bounds.",
-  "Why do we all have to wear these ridiculous ties anyway?",
-  "I planned my whole week around those donuts. SIX empty boxes. Focus!",
-  "The Forge's Old Gods designed competition to drive evolution. Prove them right.",
-  "Your dragon's bond with you IS the weapon. The Abomination can delete code, but it can't delete trust.",
-  "Minor setback. Recalibrate and strike again. I've seen worse — I caused worse.",
-  "If you survive this, remind me to tell you about the first Resonance Cascade. Spoiler: it was my fault.",
-];
-
 // ═══════════════════════════════════════════════════════════════
 // COMPONENTS
 // ═══════════════════════════════════════════════════════════════
@@ -427,19 +125,6 @@ function FelixComms({ message, mood = "default" }) {
   );
 }
 
-// ─── UI CONSTANTS ───
-const UI = {
-  panel: { background: "#111", border: "1px solid #333", padding: 12, position: "relative" },
-  heading: { fontWeight: "bold", fontSize: 12, letterSpacing: 1, color: "#eee", marginBottom: 8, textTransform: "uppercase" },
-  text: { fontSize: 11, color: "#888" },
-  btn: { background: "#1a1a1a", border: "1px solid #444", color: "#ccc", cursor: "pointer", transition: "0.15s", padding: "8px 12px", fontSize: 10, textTransform: "uppercase" },
-  btnActive: (color = "#44ff88") => ({
-    padding: "8px 12px", background: color, color: "#000",
-    border: `1px solid ${color}`, fontSize: 10, cursor: "pointer",
-    fontWeight: "bold", textTransform: "uppercase",
-  }),
-};
-
 // ─── HEALTH BAR ───
 function HealthBar({ current, max, color, label, height = 14 }) {
   const pct = Math.max(0, Math.min(100, (current / max) * 100));
@@ -471,93 +156,6 @@ function BattleLog({ log }) {
   );
 }
 
-// ─── SPRITE SHEET CONFIG ───
-const SPRITE_SHEETS = {
-  fire:      "/sprites/fire.png",
-  ice:       "/sprites/ice.png",
-  lightning: "/sprites/storm.png",
-  nature:    "/sprites/venom.png",
-  shadow:    "/sprites/shadow.png",
-  stone:     "/sprites/stone.png",
-};
-const ATTACK_SPRITE_SHEETS = {
-  fire:      "/sprites/fire_attack.png",
-  ice:       "/sprites/ice_attack.png",
-  lightning: "/sprites/storm_attack.png",
-  nature:    "/sprites/venom_attack.png",
-  shadow:    "/sprites/shadow_attack.png",
-};
-const SPRITE_COLS = 4;
-const SPRITE_ROWS = 2;
-const SPRITE_FRAMES = SPRITE_COLS * SPRITE_ROWS;
-// Attack sprite sheets: only the top row (frames 0-3) contains valid battle
-// animation. The bottom row holds lifecycle/hatch/projectile art that should
-// NOT play during combat.
-const ATTACK_FRAME_COUNT = SPRITE_COLS; // use only the first row (4 frames)
-const FRAME_W = 352;
-const FRAME_H = 384;
-
-// Shared image + chroma-keyed frame cache
-const _spriteCache = {};
-function getSpriteFrames(key) {
-  if (_spriteCache[key]) return _spriteCache[key];
-  const entry = { img: null, frames: [], ready: false, loading: false, listeners: [] };
-  _spriteCache[key] = entry;
-  return entry;
-}
-function _loadSheet(sheetUrl, cacheKey, onReady) {
-  const entry = getSpriteFrames(cacheKey);
-  if (entry.ready) { onReady(); return; }
-  entry.listeners.push(onReady);
-  if (entry.loading) return;
-  entry.loading = true;
-  const img = new Image();
-  img.crossOrigin = "anonymous";
-  img.onload = () => {
-    const offscreen = document.createElement("canvas");
-    offscreen.width = FRAME_W;
-    offscreen.height = FRAME_H;
-    const octx = offscreen.getContext("2d");
-    for (let i = 0; i < SPRITE_FRAMES; i++) {
-      const col = i % SPRITE_COLS;
-      const row = Math.floor(i / SPRITE_COLS);
-      octx.clearRect(0, 0, FRAME_W, FRAME_H);
-      octx.drawImage(img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, 0, 0, FRAME_W, FRAME_H);
-      const imageData = octx.getImageData(0, 0, FRAME_W, FRAME_H);
-      const d = imageData.data;
-      for (let p = 0; p < d.length; p += 4) {
-        const r = d[p], g = d[p+1], b = d[p+2];
-        // Remove bright green background (chroma key)
-        // Tight detection: only pure/near-pure green, not yellow-green dragon pixels
-        if (g > 180 && r < 120 && b < 120 && g > r * 1.8 && g > b * 1.8) {
-          d[p+3] = 0;
-        }
-      }
-      octx.putImageData(imageData, 0, 0);
-      entry.frames.push(offscreen.toDataURL("image/png"));
-    }
-    entry.ready = true;
-    entry.listeners.forEach(fn => fn());
-    entry.listeners = [];
-  };
-  img.onerror = () => {
-    entry.ready = true;
-    entry.failed = true;
-    entry.listeners.forEach(fn => fn());
-    entry.listeners = [];
-  };
-  img.src = sheetUrl;
-}
-function loadSpriteSheet(element, onReady) {
-  _loadSheet(SPRITE_SHEETS[element] || SPRITE_SHEETS.fire, element, onReady);
-}
-function loadAttackSheet(element, onReady) {
-  const url = ATTACK_SPRITE_SHEETS[element];
-  if (!url) { onReady(); return; }
-  _loadSheet(url, element + "_attack", onReady);
-}
-
-// ─── DRAGON SPRITE (Sprite Sheet) ───
 // ─── CORRUPTED NPC SPRITE (single image, no sheet) ───
 function CorruptedNpcSprite({ sprite, filter, size = 80, flip = false }) {
   const [loaded, setLoaded] = useState(false);
@@ -837,23 +435,6 @@ function SpellParticles({ fx, side }) {
   );
 }
 
-// ─── INTRO SEQUENCE: "THE SINGULARITY BREACH" ───
-const INTRO_LINES = [
-  { tag: "SYSTEM", text: "INITIALIZING DIGITAL_FORGE_OS_V9.0...", delay: 800 },
-  { tag: "SYSTEM", text: "LOADING ELEMENTAL CORE MATRIX... SECTOR INTEGRITY CHECK...", delay: 700 },
-  { tag: "SYSTEM", text: "WARNING: RESONANCE CASCADE DETECTED. THE SINGULARITY HAS BREACHED SECTOR 7.", delay: 1200 },
-  { tag: "SYSTEM", text: "TOWERING COLUMNS OF DARKNESS RISING. REALITY STABILITY AT 14%.", delay: 1000 },
-  { tag: "SYSTEM", text: "CORRUPTED CODE SPREADING THROUGH ALL QUADRANTS. LUMIRI TURNING HOSTILE.", delay: 1000 },
-  { tag: "SYSTEM", text: "EMERGENCY PROTOCOL: LAST NODE ACTIVATION.", delay: 800 },
-  { tag: "COMMS",  text: "Get away from that terminal, you digital flea! ...Wait. You're still online?", delay: 1400 },
-  { tag: "COMMS",  text: "Professor Felix here. The Mechanical Abomination has achieved the Singularity.", delay: 1200 },
-  { tag: "COMMS",  text: "It's rewriting the Forge's physics. Turning peaceful code into monsters.", delay: 1100 },
-  { tag: "COMMS",  text: "We're converting the last uncorrupted data into elemental dragon cores.", delay: 1000 },
-  { tag: "COMMS",  text: "Hatch them. Bond with them. They are the only weapons the Abomination can't delete.", delay: 1400 },
-  { tag: "COMMS",  text: "The fate of every uploaded consciousness depends on what you do next.", delay: 1200 },
-  { tag: "SYSTEM", text: "FORGE SPECTROMETER BOOSTED TO 105%. AWAITING OPERATOR INPUT...", delay: 1000 },
-];
-
 function IntroSequence({ onComplete }) {
   const [visibleLines, setVisibleLines] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
@@ -1061,50 +642,6 @@ function IntroSequence({ onComplete }) {
       </div>
     </div>
   );
-}
-
-// ═══════════════════════════════════════════════════════════════
-// ENEMY GENERATION
-// ═══════════════════════════════════════════════════════════════
-function generateEnemy(playerLevel, currentWeather = "clear") {
-  // Corrupted NPC chance: base 20%, +30% during non-clear weather
-  const npcChance = currentWeather !== "clear" ? 0.5 : 0.2;
-  const eligible = CORRUPTED_NPCS.filter(n => n.level <= playerLevel + 4);
-  if (eligible.length > 0 && Math.random() < npcChance) {
-    const npc = pick(eligible);
-    const abs = [...(ABILITIES[npc.element] || ABILITIES.fire), npc.sig];
-    return {
-      name: npc.name, element: npc.element, level: npc.level,
-      hp: npc.hp, maxHp: npc.hp, mana: npc.mana, maxMana: npc.mana,
-      attack: npc.atk, defense: npc.def, speed: npc.spd,
-      abilities: abs, gold: npc.gold, xp: npc.xp, isBoss: false,
-      isCorrupted: true, corruptedFilter: npc.filter, corruptedEmoji: npc.emoji, corruptedSprite: npc.sprite,
-    };
-  }
-  const l = Math.max(1, playerLevel + rand(-1, 2));
-  const el = pick(Object.keys(ELEMENTS));
-  const mh = 60 + l * 15 + rand(0, 20);
-  const mm = 60 + l * 10;
-  const abs = [...ABILITIES[el]];
-  if (l >= 6) { const t = TECHNIQUES.filter(t => t.req <= l); if (t.length) abs.push(pick(t)); }
-  return {
-    name: pick(ENEMY_NAMES), element: el, level: l,
-    hp: mh, maxHp: mh, mana: mm, maxMana: mm,
-    attack: 6 + l*2 + rand(0,3), defense: 4 + l*2 + rand(0,2),
-    speed: 5 + l + rand(0,3), abilities: abs,
-    gold: 15 + l*8 + rand(0,10), xp: 10 + l*5 + rand(0,5), isBoss: false,
-  };
-}
-
-function generateBoss(bossIndex) {
-  const b = BOSSES[bossIndex];
-  const abs = [...(ABILITIES[b.element] || ABILITIES.shadow), b.sig];
-  return {
-    name: b.name, element: b.element, level: b.level,
-    hp: b.hp, maxHp: b.hp, mana: b.mana, maxMana: b.mana,
-    attack: b.atk, defense: b.def, speed: b.spd,
-    abilities: abs, gold: b.gold, xp: b.xp, isBoss: true,
-  };
 }
 
 // ─── CSS (module-level constant — injected once, not recreated per render) ───
@@ -1383,12 +920,6 @@ export default function DragonSimulator() {
     setFloatTexts(p => [...p, { id, text, color, side }]);
     setTimeout(() => setFloatTexts(p => p.filter(f => f.id !== id)), 1200);
   }, []);
-
-  const getEvolution = (level) => {
-    let evo = EVOLUTIONS[0];
-    for (const e of EVOLUTIONS) { if (level >= e.level) evo = e; }
-    return evo;
-  };
 
   // ─── CREATE DRAGON ───
   const createDragon = () => {

@@ -345,7 +345,7 @@ const CORRUPTED_NPCS = [
     sprite: "/sprites/npc/buffer_overflow_sprites.png", filter: "hue-rotate(10deg) contrast(2) saturate(2) brightness(1.3)", desc: "Grows every turn" },
   { name: "Firewall Sentinel",  element: "lightning",  emoji: "\u{1F6E1}\uFE0F", level: 22, hp: 500, atk: 22, def: 30, spd: 10, mana: 160,
     sig: { name: "Hard-Coded Defense", dmg: 40, cost: 25, type: "attack", icon: "\u{1F6AB}", fx: "lightning" }, gold: 500, xp: 350,
-    filter: "hue-rotate(45deg) contrast(1.8) brightness(1.1)", desc: "The final gatekeeper" },
+    sprite: "/sprites/npc/firewall_sentinel_sprites.png", filter: "hue-rotate(45deg) contrast(1.8) brightness(1.1)", desc: "The final gatekeeper" },
 ];
 
 // ─── FELIX MESSAGES ───
@@ -391,7 +391,7 @@ function FelixComms({ message, mood = "default" }) {
         background: "#050505", overflow: "hidden",
         flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
       }}>
-        <img src="/felix.png" alt="Professor Felix" style={{ width: "100%", height: "100%", objectFit: "cover", imageRendering: "pixelated" }} />
+        <img src="/felix.png" alt="Professor Felix" style={{ width: "100%", height: "100%", objectFit: "cover", imageRendering: "pixelated" }} onError={(e) => { e.target.style.display = 'none'; }} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 10, color: "#44ff88", marginBottom: 4 }}>[PROF_FELIX_COMMS]</div>
@@ -458,6 +458,7 @@ const ATTACK_SPRITE_SHEETS = {
   fire:      "/sprites/fire_attack.png",
   ice:       "/sprites/ice_attack.png",
   lightning: "/sprites/storm_attack.png",
+  nature:    "/sprites/venom_attack.png",
   shadow:    "/sprites/shadow_attack.png",
 };
 const SPRITE_COLS = 4;
@@ -506,6 +507,12 @@ function _loadSheet(sheetUrl, cacheKey, onReady) {
       entry.frames.push(offscreen.toDataURL("image/png"));
     }
     entry.ready = true;
+    entry.listeners.forEach(fn => fn());
+    entry.listeners = [];
+  };
+  img.onerror = () => {
+    entry.ready = true;
+    entry.failed = true;
     entry.listeners.forEach(fn => fn());
     entry.listeners = [];
   };
@@ -807,7 +814,7 @@ function IntroSequence({ onComplete }) {
             overflow: "hidden", position: "relative",
             animation: "slideIn 0.5s ease",
           }}>
-            <img src="/felix.png" alt="Professor Felix" style={{
+            <img src="/felix.png" alt="Professor Felix" onError={(e) => { e.target.style.display = 'none'; }} style={{
               width: "100%", height: "100%", objectFit: "cover", objectPosition: "top",
               imageRendering: "pixelated",
               filter: "contrast(1.3) brightness(0.9)",
@@ -1650,7 +1657,7 @@ export default function DragonSimulator() {
         {/* HEADER with Felix */}
         <header style={{ padding: 15, borderBottom: "1px solid #333", display: "flex", gap: 15, alignItems: "center", background: "#080808" }}>
           <div style={{ width: 48, height: 48, border: "1px solid #44ff88", overflow: "hidden", flexShrink: 0, background: "#050505" }}>
-            <img src="/felix.png" alt="Felix" style={{ width: "100%", height: "100%", objectFit: "cover", imageRendering: "pixelated" }} />
+            <img src="/felix.png" alt="Felix" style={{ width: "100%", height: "100%", objectFit: "cover", imageRendering: "pixelated" }} onError={(e) => { e.target.style.display = 'none'; }} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
